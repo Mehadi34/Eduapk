@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduLearn — Learning Portal</title>
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#3b6ef8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="EduLearn" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root { --sidebar-w:260px; --navy:#1a2340; --blue:#3b6ef8; --blue-lt:#eff4ff; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:#f5f7fb;color:#1e293b;min-height:100vh;}
+
+    /* ── SIDEBAR ── */
+    #sidebar{width:var(--sidebar-w);height:100vh;background:var(--navy);position:fixed;left:0;top:0;overflow-y:auto;z-index:200;display:flex;flex-direction:column;transition:transform .3s cubic-bezier(.4,0,.2,1);}
+    #sidebar::-webkit-scrollbar{width:3px;}
+    #sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px;}
+    .logo-wrap{display:flex;align-items:center;gap:12px;padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,.07);}
+    .logo-icon{width:40px;height:40px;background:linear-gradient(135deg,#3b6ef8,#60a5fa);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:white;box-shadow:0 4px 12px rgba(59,110,248,.4);flex-shrink:0;}
+    .logo-name{color:white;font-weight:700;font-size:15px;line-height:1.2;}
+    .logo-sub{color:rgba(255,255,255,.35);font-size:11px;margin-top:2px;}
+
+    .sb-section{padding:14px 12px 4px;font-size:10px;font-weight:700;color:rgba(255,255,255,.22);letter-spacing:.1em;text-transform:uppercase;}
+
+    .sb-btn{display:flex;align-items:center;gap:11px;width:calc(100% - 16px);margin:2px 8px;padding:9px 12px;border:none;background:none;color:rgba(255,255,255,.5);font-size:13.5px;font-weight:600;cursor:pointer;text-align:left;border-radius:10px;transition:all .18s;font-family:inherit;}
+    .sb-btn:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85);}
+    .sb-btn.active{background:rgba(59,110,248,.18);color:white;border:1px solid rgba(59,110,248,.28);}
+    .sb-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;background:rgba(255,255,255,.07);transition:background .18s;}
+    .sb-btn:hover .sb-icon,.sb-btn.active .sb-icon{background:rgba(59,110,248,.3);}
+    .chevron{margin-left:auto;font-size:10px;color:rgba(255,255,255,.25);transition:transform .22s;}
+    .sb-btn.open .chevron{transform:rotate(90deg);}
+
+    .sub-tree{display:none;padding-bottom:2px;}
+    .sub-tree.open{display:block;}
+
+    .sub-btn{display:flex;align-items:center;gap:8px;width:100%;padding:7px 12px 7px 30px;border:none;background:none;color:rgba(255,255,255,.4);font-size:12.5px;font-weight:600;cursor:pointer;text-align:left;transition:color .18s;font-family:inherit;}
+    .sub-btn:hover{color:rgba(255,255,255,.75);}
+    .sub-btn.active{color:#93c5fd;}
+    .sub-dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.18);flex-shrink:0;transition:background .18s;}
+    .sub-btn.active .sub-dot{background:#3b82f6;}
+
+    .ch-btn{display:flex;align-items:center;width:100%;padding:6px 12px 6px 44px;border:none;background:none;color:rgba(255,255,255,.3);font-size:12px;font-weight:500;cursor:pointer;text-align:left;transition:color .18s;font-family:inherit;position:relative;}
+    .ch-btn::before{content:'';position:absolute;left:36px;width:5px;height:1px;background:rgba(255,255,255,.12);}
+    .ch-btn:hover{color:rgba(255,255,255,.65);}
+    .ch-btn.active{color:#bfdbfe;}
+    .ch-btn.active::before{background:#3b82f6;}
+
+    .sb-bottom{margin-top:auto;border-top:1px solid rgba(255,255,255,.07);padding:10px 0 10px;}
+
+    /* ── MAIN ── */
+    #main{margin-left:var(--sidebar-w);min-height:100vh;display:flex;flex-direction:column;}
+    @media(max-width:768px){#sidebar{transform:translateX(-100%);}#sidebar.open{transform:translateX(0);}#main{margin-left:0;}}
+
+    /* ── HEADER ── */
+    #hdr{height:60px;background:white;border-bottom:1px solid #e8ecf4;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:100;box-shadow:0 1px 8px rgba(0,0,0,.05);}
+    .bc{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+    .bc-i{font-size:13px;color:#64748b;font-weight:500;}
+    .bc-i.lnk{color:var(--blue);cursor:pointer;}
+    .bc-i.lnk:hover{text-decoration:underline;}
+    .bc-i.act{color:#1e293b;font-weight:700;}
+    .bc-sep{color:#cbd5e1;}
+
+    /* Admin dropdown */
+    .adm-wrap{position:relative;}
+    .adm-btn{display:flex;align-items:center;gap:8px;padding:6px 14px 6px 8px;border-radius:99px;border:1.5px solid #e8ecf4;background:white;cursor:pointer;transition:all .2s;font-size:13px;font-weight:600;color:#374151;font-family:inherit;}
+    .adm-btn:hover{border-color:var(--blue);color:var(--blue);}
+    .adm-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#3b6ef8,#60a5fa);display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:700;}
+    .adm-menu{position:absolute;right:0;top:calc(100% + 8px);background:white;border-radius:12px;border:1px solid #e8ecf4;min-width:160px;box-shadow:0 8px 30px rgba(0,0,0,.12);display:none;overflow:hidden;z-index:999;}
+    .adm-wrap:hover .adm-menu,.adm-wrap:focus-within .adm-menu{display:block;}
+    .adm-item{display:block;padding:10px 16px;font-size:13px;color:#374151;font-weight:500;text-decoration:none;transition:background .15s;}
+    .adm-item:hover{background:#f5f7fb;color:var(--blue);}
+    .adm-divider{border:none;border-top:1px solid #f0f2f5;margin:4px 0;}
+
+    .hamburger{display:none;padding:8px;border-radius:8px;border:none;background:none;cursor:pointer;}
+    @media(max-width:768px){.hamburger{display:flex;align-items:center;}}
+
+    /* ── PAGE AREA ── */
+    #page{flex:1;padding:28px;}
+    @media(max-width:640px){#page{padding:16px;}}
+
+    /* ── HOME: CLASS CARDS ── */
+    .home-title{font-size:28px;font-weight:800;color:#111827;margin-bottom:4px;}
+    .home-sub{color:#64748b;font-size:14px;margin-bottom:26px;}
+    .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(275px,1fr));gap:18px;margin-bottom:34px;}
+
+    .cls-card{border-radius:20px;cursor:pointer;border:none;background:none;text-align:left;width:100%;transition:transform .22s cubic-bezier(.34,1.56,.64,1);animation:cardUp .5s ease both;}
+    .cls-card:hover{transform:translateY(-5px);}
+    @keyframes cardUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+    .cls-card:nth-child(1){animation-delay:.04s;}.cls-card:nth-child(2){animation-delay:.09s;}.cls-card:nth-child(3){animation-delay:.14s;}
+    .cls-card:nth-child(4){animation-delay:.19s;}.cls-card:nth-child(5){animation-delay:.24s;}.cls-card:nth-child(6){animation-delay:.29s;}
+
+    .cls-inner{border-radius:20px;overflow:hidden;position:relative;min-height:164px;box-shadow:0 2px 14px rgba(0,0,0,.07);transition:box-shadow .22s;}
+    .cls-card:hover .cls-inner{box-shadow:0 18px 48px rgba(0,0,0,.14);}
+    .cls-bg{position:absolute;inset:0;}
+    .cls-sparkle{position:absolute;top:14px;right:16px;font-size:16px;opacity:.5;user-select:none;}
+    .cls-emoji{position:absolute;right:-4px;bottom:36px;font-size:86px;filter:drop-shadow(0 8px 18px rgba(0,0,0,.15));user-select:none;pointer-events:none;transition:transform .28s;}
+    .cls-card:hover .cls-emoji{transform:scale(1.07) rotate(-4deg);}
+    .cls-body{position:relative;z-index:2;padding:20px 20px 0;}
+    .cls-name{font-size:23px;font-weight:800;line-height:1.1;margin-bottom:5px;}
+    .cls-meta{font-size:12px;opacity:.7;font-weight:500;}
+    .cls-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;border:none;border-radius:0 0 20px 20px;font-size:14px;font-weight:700;cursor:pointer;margin-top:18px;position:relative;z-index:2;transition:filter .2s;font-family:inherit;}
+    .cls-card:hover .cls-btn{filter:brightness(1.1);}
+    .cls-arr{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:13px;}
+
+    /* Color themes */
+    .t-green .cls-bg{background:linear-gradient(145deg,#dcfce7,#bbf7d0,#86efac);}
+    .t-green .cls-name{color:#14532d;}.t-green .cls-meta{color:#15803d;}.t-green .cls-btn{background:linear-gradient(90deg,#16a34a,#22c55e);color:white;}
+    .t-blue .cls-bg{background:linear-gradient(145deg,#dbeafe,#bfdbfe,#93c5fd);}
+    .t-blue .cls-name{color:#1e3a8a;}.t-blue .cls-meta{color:#1d4ed8;}.t-blue .cls-btn{background:linear-gradient(90deg,#2563eb,#3b82f6);color:white;}
+    .t-purple .cls-bg{background:linear-gradient(145deg,#f3e8ff,#e9d5ff,#d8b4fe);}
+    .t-purple .cls-name{color:#3b0764;}.t-purple .cls-meta{color:#7c3aed;}.t-purple .cls-btn{background:linear-gradient(90deg,#7c3aed,#a855f7);color:white;}
+    .t-orange .cls-bg{background:linear-gradient(145deg,#fff7ed,#fed7aa,#fdba74);}
+    .t-orange .cls-name{color:#7c2d12;}.t-orange .cls-meta{color:#ea580c;}.t-orange .cls-btn{background:linear-gradient(90deg,#ea580c,#f97316);color:white;}
+    .t-gold .cls-bg{background:linear-gradient(145deg,#fefce8,#fef08a,#facc15);}
+    .t-gold .cls-name{color:#713f12;}.t-gold .cls-meta{color:#ca8a04;}.t-gold .cls-btn{background:linear-gradient(90deg,#ca8a04,#eab308);color:white;}
+    .t-red .cls-bg{background:linear-gradient(145deg,#fff1f2,#fecdd3,#fda4af);}
+    .t-red .cls-name{color:#881337;}.t-red .cls-meta{color:#e11d48;}.t-red .cls-btn{background:linear-gradient(90deg,#e11d48,#f43f5e);color:white;}
+
+    /* Quick access cards */
+    .qa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:32px;}
+    .qa-card{background:white;border-radius:14px;border:1.5px solid #e8ecf4;padding:16px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .2s;}
+    .qa-card:hover{border-color:var(--blue);box-shadow:0 4px 18px rgba(59,110,248,.1);transform:translateY(-2px);}
+    .qa-ico{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+    .qa-title{font-size:14px;font-weight:700;color:#1e293b;}
+    .qa-desc{font-size:12px;color:#94a3b8;margin-top:2px;}
+
+    /* ── CREATOR FOOTER ── */
+    .footer{border-top:1.5px solid #e8ecf4;background:white;padding:14px 28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+    .footer-badge{display:inline-flex;align-items:center;gap:6px;background:#f5f7fb;border:1px solid #e8ecf4;border-radius:8px;padding:4px 10px;font-size:11px;color:#94a3b8;font-weight:600;}
+    .footer-name{font-size:14px;font-weight:700;color:var(--blue);}
+    .footer-tag{font-size:12px;color:#94a3b8;}
+    .footer-sig{margin-left:auto;font-family:'Brush Script MT',cursive;font-size:22px;color:#64748b;letter-spacing:.03em;}
+
+    /* ── CHAPTER TABS ── */
+    .tab-bar{display:flex;gap:2px;border-bottom:2px solid #e8ecf4;margin-bottom:22px;overflow-x:auto;padding-bottom:0;}
+    .tab-btn{padding:10px 18px;font-size:13.5px;font-weight:600;border:none;background:transparent;cursor:pointer;color:#64748b;transition:all .2s;white-space:nowrap;border-bottom:2.5px solid transparent;margin-bottom:-2px;border-radius:8px 8px 0 0;font-family:inherit;}
+    .tab-btn:hover{color:var(--blue);background:#eff4ff;}
+    .tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);background:white;}
+
+    /* Video */
+    .pl-item{padding:11px 13px;border-radius:10px;cursor:pointer;transition:all .2s;border:1.5px solid transparent;margin-bottom:6px;display:flex;align-items:flex-start;gap:10px;}
+    .pl-item:hover{background:#eff4ff;border-color:#c7d9ff;}
+    .pl-item.active{background:#dbeafe;border-color:#3b6ef8;}
+    .pl-num{width:24px;height:24px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#475569;flex-shrink:0;}
+    .pl-item.active .pl-num{background:var(--blue);color:white;}
+
+    /* MCQ */
+    .mcq-opt{padding:12px 16px;border:2px solid #e8ecf4;border-radius:11px;cursor:pointer;transition:all .2s;font-size:14px;display:flex;align-items:center;gap:12px;}
+    .mcq-opt:hover{border-color:#93c5fd;background:#eff4ff;}
+    .mcq-opt.selected{border-color:var(--blue);background:#dbeafe;}
+    .mcq-opt.ok{border-color:#10b981;background:#d1fae5;}
+    .mcq-opt.ng{border-color:#ef4444;background:#fee2e2;}
+
+    /* CQ */
+    .cq-card{background:white;border-radius:14px;border:1.5px solid #e8ecf4;overflow:hidden;}
+    .ans-box{background:#f8fafc;border-left:4px solid var(--blue);padding:16px;font-size:14px;line-height:1.75;white-space:pre-line;}
+    .ai-badge{background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:2px 10px;border-radius:99px;font-size:11px;font-weight:600;}
+
+    /* Progress */
+    .prog-bar{height:7px;background:#e8ecf4;border-radius:4px;overflow:hidden;}
+    .prog-fill{height:100%;background:linear-gradient(90deg,var(--blue),#60a5fa);border-radius:4px;transition:width .5s ease;}
+
+    /* Score */
+    .score-card{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:white;border-radius:18px;padding:32px;text-align:center;}
+
+    /* Animations */
+    .fade-in{animation:fadeIn .3s ease both;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+    /* Overlay */
+    #overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:199;backdrop-filter:blur(2px);}
+    #overlay.show{display:block;}
+
+    ::-webkit-scrollbar{width:5px;height:5px;}
+    ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px;}
+    ::-webkit-scrollbar-track{background:transparent;}
+
+    /* ── PWA INSTALL BANNER ── */
+    #install-banner{
+      position:fixed;bottom:0;left:0;right:0;z-index:9999;
+      background:linear-gradient(135deg,#1a2340,#1e3a8a);
+      color:white;padding:14px 20px;
+      display:flex;align-items:center;gap:14px;
+      box-shadow:0 -4px 24px rgba(0,0,0,.25);
+      transform:translateY(100%);transition:transform .4s cubic-bezier(.34,1.56,.64,1);
+    }
+    #install-banner.show{transform:translateY(0);}
+    #install-banner .ib-icon{width:44px;height:44px;border-radius:12px;flex-shrink:0;object-fit:cover;}
+    #install-banner .ib-text{flex:1;}
+    #install-banner .ib-title{font-weight:800;font-size:14px;}
+    #install-banner .ib-sub{font-size:12px;color:rgba(255,255,255,.6);margin-top:1px;}
+    #install-banner .ib-btn{padding:9px 18px;background:#3b6ef8;border:none;border-radius:10px;color:white;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;font-family:inherit;flex-shrink:0;}
+    #install-banner .ib-btn:hover{background:#2563eb;}
+    #install-banner .ib-close{background:none;border:none;color:rgba(255,255,255,.4);font-size:20px;cursor:pointer;padding:4px;flex-shrink:0;line-height:1;}
+    #install-banner .ib-close:hover{color:white;}
+    @media(max-width:400px){#install-banner{flex-wrap:wrap;}#install-banner .ib-btn{width:100%;text-align:center;}}
+  </style>
+</head>
+<body>
+
+<div id="overlay" onclick="closeSidebar()"></div>
+
+<!-- ══════════════════════════════════════
+     SIDEBAR
+     ══════════════════════════════════════ -->
+<aside id="sidebar">
+  <!-- Logo -->
+  <div class="logo-wrap">
+    <div class="logo-icon">E</div>
+    <div>
+      <div class="logo-name">EduLearn</div>
+      <div class="logo-sub">Learning Portal</div>
+    </div>
+  </div>
+
+  <!-- Home -->
+  <div style="padding:10px 0 0;">
+    <button class="sb-btn active" id="home-btn" onclick="showHome()">
+      <span class="sb-icon">🏠</span> Home
+    </button>
+  </div>
+
+  <!-- Dynamic class/subject/chapter tree -->
+  <nav id="nav-tree" style="flex:1;padding-bottom:6px;">
+    <div style="padding:16px 18px;color:rgba(255,255,255,.2);font-size:12px;">Loading...</div>
+  </nav>
+
+  <!-- Quick Access -->
+  <div class="sb-bottom">
+    <div class="sb-section">Quick Access</div>
+    <button class="sb-btn" onclick="quickJump('videos')">
+      <span class="sb-icon" style="background:rgba(59,110,248,.22);">▶</span> Video Lessons
+    </button>
+    <button class="sb-btn" onclick="quickJump('mcqs')">
+      <span class="sb-icon" style="background:rgba(236,72,153,.18);">🧠</span> MCQ Quizzes
+    </button>
+    <button class="sb-btn" onclick="quickJump('cqs')">
+      <span class="sb-icon" style="background:rgba(245,158,11,.18);">✍️</span> Written Q&A
+    </button>
+  </div>
+</aside>
+
+<!-- ══════════════════════════════════════
+     MAIN
+     ══════════════════════════════════════ -->
+<div id="main">
+
+  <!-- Header -->
+  <header id="hdr">
+    <button class="hamburger" onclick="toggleSidebar()">
+      <svg width="20" height="20" fill="none" stroke="#374151" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+    </button>
+
+    <div class="bc" id="bc">
+      <span class="bc-i act">Home</span>
+      <span class="bc-sep">›</span>
+      <span class="bc-i">Welcome</span>
+    </div>
+
+    <div class="adm-wrap">
+      <button class="adm-btn">
+        <div class="adm-avatar">A</div>
+        Admin
+        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+      </button>
+      <div class="adm-menu">
+        <a href="admin.html" target="_blank" class="adm-item">⚙️ Admin Panel</a>
+        <a href="admin.html" target="_blank" class="adm-item">➕ Add Content</a>
+        <hr class="adm-divider"/>
+        <span class="adm-item" style="color:#94a3b8;cursor:default;font-size:11px;">EduLearn v2.0</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page content -->
+  <div id="page">
+
+    <!-- HOME SCREEN -->
+    <div id="home-screen" class="fade-in">
+      <div class="home-title">Welcome to EduLearn</div>
+      <div class="home-sub">Select a class to start learning and explore chapters.</div>
+
+      <!-- Class cards (JS-rendered) -->
+      <div class="cards-grid" id="cards-grid">
+        <div style="color:#94a3b8;grid-column:1/-1;padding:20px 0;">Loading classes...</div>
+      </div>
+
+      <!-- Quick access -->
+      <div style="font-size:16px;font-weight:800;color:#111827;margin-bottom:14px;">Quick Access</div>
+      <div class="qa-grid">
+        <div class="qa-card" onclick="quickJump('videos')">
+          <div class="qa-ico" style="background:#eff4ff;">▶️</div>
+          <div>
+            <div class="qa-title">Video Lessons</div>
+            <div class="qa-desc">Watch curated video lessons anytime.</div>
+          </div>
+          <span style="margin-left:auto;color:#cbd5e1;">›</span>
+        </div>
+        <div class="qa-card" onclick="quickJump('mcqs')">
+          <div class="qa-ico" style="background:#fdf2f8;">❓</div>
+          <div>
+            <div class="qa-title">MCQ Quizzes</div>
+            <div class="qa-desc">Test your knowledge with quizzes.</div>
+          </div>
+          <span style="margin-left:auto;color:#cbd5e1;">›</span>
+        </div>
+        <div class="qa-card" onclick="quickJump('cqs')">
+          <div class="qa-ico" style="background:#fffbeb;">✏️</div>
+          <div>
+            <div class="qa-title">Written Q&A</div>
+            <div class="qa-desc">Practice descriptive questions with model answers.</div>
+          </div>
+          <span style="margin-left:auto;color:#cbd5e1;">›</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHAPTER CONTENT (hidden until chapter selected) -->
+    <div id="chapter-content" class="hidden"></div>
+
+  </div><!-- /page -->
+
+  <!-- Creator Footer -->
+  <footer class="footer">
+    <div class="footer-badge">👤 Who is Mehadi CHECK</div>
+    <div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:12px;color:#94a3b8;font-weight:600;">Creator by</span>
+        <span class="footer-name">Md Mehadi Hasan</span>
+      </div>
+      <div class="footer-tag">Passionate Edu Creator &nbsp;|&nbsp; Building tools for better learning</div>
+    </div>
+    <div class="footer-sig">Mehadi Hasan</div>
+  </footer>
+
+</div><!-- /main -->
+
+<!-- ══════════════════════════════════════
+     PWA INSTALL BANNER
+     ══════════════════════════════════════ -->
+<div id="install-banner">
+  <img src="icon-192.png" class="ib-icon" alt="EduLearn" onerror="this.style.display='none'"/>
+  <div class="ib-text">
+    <div class="ib-title">📲 Install EduLearn App</div>
+    <div class="ib-sub">Works offline · No app store needed · Free forever</div>
+  </div>
+  <button class="ib-btn" id="install-btn">Install</button>
+  <button class="ib-close" id="install-close" title="Dismiss">✕</button>
+</div>
+
+<script>
+/* ── BAKED DATA (injected by Admin "Generate index.html") ── */
+// This line is replaced automatically — do not edit manually
+var BAKED_DATA = null;
+// Timestamp injected alongside data so new deploys always win over stale localStorage
+var BAKED_TS = 0;
+
+/* ── STATE ── */
+let db={classes:[]}, curCls=null, curSub=null, curCh=null;
+let vidIdx=0, mcqAns={}, mcqDone=false;
+
+const THEMES=['t-green','t-blue','t-purple','t-orange','t-gold','t-red'];
+const EMOJIS=['📗','📋','🌐','📊','🎯','🎓'];
+const CLS_ICONS=['📗','📋','🌐','📊','🎯','🎓','📘','⚡','🧪','🔬'];
+const SPARKLES=['✦','✧','❋','✦','✧','❋'];
+
+/* ── INIT ── */
+async function init(){
+  try{
+    const storedTS  = parseInt(localStorage.getItem('lmsDataTS') || '0');
+    const stored    = localStorage.getItem('lmsData');
+    const hasBaked  = typeof BAKED_DATA !== 'undefined' && BAKED_DATA && BAKED_DATA.classes;
+
+    /* Rule: BAKED_DATA wins if its timestamp is newer than what's stored.
+       This means every time you generate+upload a new index.html,
+       ALL visitors automatically get the fresh data. */
+    if(hasBaked && BAKED_TS >= storedTS){
+      /* Fresh baked data — write to localStorage so admin changes layer on top */
+      db = BAKED_DATA;
+      localStorage.setItem('lmsData', JSON.stringify(db));
+      localStorage.setItem('lmsDataTS', String(BAKED_TS));
+    }
+    else if(stored && stored !== 'null'){
+      /* Existing localStorage (admin edits on same machine) */
+      db = JSON.parse(stored);
+    }
+    else{
+      /* Last resort: try videos.json for local dev */
+      try{
+        const r=await fetch('videos.json');
+        if(r.ok){
+          db=await r.json();
+          localStorage.setItem('lmsData',JSON.stringify(db));
+          localStorage.setItem('lmsDataTS','0');
+        }else{ db={classes:[]}; }
+      }catch(fe){ db={classes:[]}; }
+    }
+    buildSidebar();
+    buildCards();
+  }catch(e){
+    console.error(e);
+    db={classes:[]};
+    buildSidebar();
+    buildCards();
+  }
+}
+
+/* ── CLASS CARDS ── */
+function buildCards(){
+  const g=document.getElementById('cards-grid');
+  if(!db.classes.length){
+    g.innerHTML='<div style="color:#94a3b8;grid-column:1/-1;padding:20px;text-align:center;">No classes yet. <a href="admin.html" style="color:var(--blue);">Add in Admin →</a></div>';
+    return;
+  }
+  g.innerHTML=db.classes.map((cls,i)=>{
+    const th=THEMES[i%THEMES.length], em=EMOJIS[i%EMOJIS.length], sp=SPARKLES[i%SPARKLES.length];
+    const subs=cls.subjects.length;
+    const chs=cls.subjects.reduce((a,s)=>a+s.chapters.length,0);
+    return `
+      <button class="cls-card ${th}" onclick="openClass('${cls.id}')">
+        <div class="cls-inner">
+          <div class="cls-bg"></div>
+          <div class="cls-sparkle">${sp}</div>
+          <div class="cls-emoji">${em}</div>
+          <div class="cls-body">
+            <div class="cls-name">${cls.name}</div>
+            <div class="cls-meta">${subs} Subject${subs!==1?'s':''} · ${chs} Chapter${chs!==1?'s':''}</div>
+          </div>
+          <div class="cls-btn">Explore <div class="cls-arr">→</div></div>
+        </div>
+      </button>`;
+  }).join('');
+}
+
+/* Clicking a class card opens its tree in sidebar */
+function openClass(cid){
+  const t=document.getElementById('ct-'+cid);
+  const b=document.getElementById('cb-'+cid);
+  // Close all other class trees first
+  db.classes.forEach(c=>{
+    if(c.id!==cid){
+      document.getElementById('ct-'+c.id)?.classList.remove('open');
+      document.getElementById('cb-'+c.id)?.classList.remove('open','active');
+    }
+  });
+  if(t&&b){t.classList.add('open');b.classList.add('open','active');}
+  const cls=db.classes.find(c=>c.id===cid);
+  if(cls) setBc([{l:'Home',a:'showHome()'},{l:cls.name}]);
+  // On mobile, open sidebar so user sees the tree
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+}
+
+/* ── SIDEBAR ── */
+function buildSidebar(){
+  const nav=document.getElementById('nav-tree');
+  let h='<div class="sb-section">Classes</div>';
+  db.classes.forEach((cls,ci)=>{
+    const ico=CLS_ICONS[ci%CLS_ICONS.length];
+    h+=`<button class="sb-btn" id="cb-${cls.id}" onclick="toggleCls('${cls.id}')">
+      <span class="sb-icon">${ico}</span><span style="flex:1">${cls.name}</span><span class="chevron">›</span>
+    </button>
+    <div class="sub-tree" id="ct-${cls.id}">`;
+    cls.subjects.forEach(sub=>{
+      h+=`<button class="sub-btn" id="sb-${sub.id}" onclick="toggleSub('${cls.id}','${sub.id}')">
+        <span class="sub-dot"></span>${sub.icon||''} ${sub.name}
+      </button>
+      <div class="sub-tree" id="st-${sub.id}">`;
+      sub.chapters.forEach(ch=>{
+        h+=`<button class="ch-btn" id="chb-${ch.id}" onclick="selectChapter('${cls.id}','${sub.id}','${ch.id}')">${ch.name}</button>`;
+      });
+      h+=`</div>`;
+    });
+    h+=`</div>`;
+  });
+  nav.innerHTML=h;
+}
+
+function toggleCls(id){
+  document.getElementById('ct-'+id).classList.toggle('open');
+  const b=document.getElementById('cb-'+id);
+  b.classList.toggle('open');b.classList.toggle('active',document.getElementById('ct-'+id).classList.contains('open'));
+}
+function toggleSub(cid,sid){
+  document.getElementById('st-'+sid).classList.toggle('open');
+  document.getElementById('sb-'+sid).classList.toggle('active',document.getElementById('st-'+sid).classList.contains('open'));
+}
+
+/* ── SELECT CHAPTER ── */
+function selectChapter(cid,sid,chid){
+  curCls=db.classes.find(c=>c.id===cid);
+  curSub=curCls.subjects.find(s=>s.id===sid);
+  curCh=curSub.chapters.find(c=>c.id===chid);
+  vidIdx=0; mcqAns={}; mcqDone=false;
+
+  document.querySelectorAll('.ch-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('chb-'+chid).classList.add('active');
+  document.querySelectorAll('.sub-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sb-'+sid).classList.add('active');
+
+  setBc([
+    {l:'Home',a:'showHome()'},{l:curCls.name,a:`openClass('${cid}')`},
+    {l:(curSub.icon||'')+' '+curSub.name},{l:curCh.name,act:true}
+  ]);
+
+  document.getElementById('home-screen').classList.add('hidden');
+  document.getElementById('home-btn').classList.remove('active');
+  const cc=document.getElementById('chapter-content');
+  cc.classList.remove('hidden'); cc.className='fade-in'; cc.innerHTML=buildChapter();
+  if(curCh.videos.length>0) loadVid(0);
+  closeSidebar();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ── HOME ── */
+function showHome(){
+  document.getElementById('home-screen').classList.remove('hidden');
+  document.getElementById('home-screen').classList.add('fade-in');
+  document.getElementById('chapter-content').classList.add('hidden');
+  document.getElementById('home-btn').classList.add('active');
+  document.querySelectorAll('.ch-btn').forEach(b=>b.classList.remove('active'));
+  setBc([{l:'Home'},{l:'Welcome',act:true}]);
+}
+
+function quickJump(tab){
+  if(!curCh){document.getElementById('cards-grid').scrollIntoView({behavior:'smooth'});return;}
+  const el=document.querySelector(`[data-tab="${tab}"]`);
+  if(el) el.click();
+}
+
+/* ── BREADCRUMB ── */
+function setBc(items){
+  document.getElementById('bc').innerHTML=items.map((it,i)=>{
+    const cls=it.act?'bc-i act':it.a?'bc-i lnk':'bc-i';
+    const oc=it.a?`onclick="${it.a}"`:'';
+    return `${i>0?'<span class="bc-sep">›</span>':''}<span class="${cls}" ${oc}>${it.l}</span>`;
+  }).join('');
+}
+
+/* ── BUILD CHAPTER HTML ── */
+function buildChapter(){
+  const ch=curCh;
+  const hv=ch.videos.length>0,hp=ch.pdfs.length>0,hm=ch.mcqs.length>0,hc=ch.cqs.length>0,he=!!(ch.examLink&&ch.examLink.trim());
+  const first=hv?'videos':hp?'pdfs':hm?'mcqs':hc?'cqs':'exam';
+  let tabs='';
+  if(hv) tabs+=`<button class="tab-btn ${first==='videos'?'active':''}" data-tab="videos" onclick="switchTab('videos',this)">🎥 Videos <small style="opacity:.5">(${ch.videos.length})</small></button>`;
+  if(hp) tabs+=`<button class="tab-btn ${first==='pdfs'?'active':''}" data-tab="pdfs" onclick="switchTab('pdfs',this)">📄 PDFs <small style="opacity:.5">(${ch.pdfs.length})</small></button>`;
+  if(hm) tabs+=`<button class="tab-btn ${first==='mcqs'?'active':''}" data-tab="mcqs" onclick="switchTab('mcqs',this)">🧠 MCQ Quiz <small style="opacity:.5">(${ch.mcqs.length})</small></button>`;
+  if(hc) tabs+=`<button class="tab-btn ${first==='cqs'?'active':''}" data-tab="cqs" onclick="switchTab('cqs',this)">✍️ Written Q&A <small style="opacity:.5">(${ch.cqs.length})</small></button>`;
+  if(he) tabs+=`<button class="tab-btn ${first==='exam'?'active':''}" data-tab="exam" onclick="switchTab('exam',this)">📝 Exam</button>`;
+  if(!tabs) tabs='<span style="color:#94a3b8;font-size:13px;padding:10px;">No content yet.</span>';
+
+  return `
+    <div style="margin-bottom:20px;">
+      <h2 style="font-size:22px;font-weight:800;color:#111827;margin-bottom:4px;">${ch.name}</h2>
+      <p style="color:#64748b;font-size:13px;">${curSub.icon||''} ${curSub.name} &nbsp;·&nbsp; ${curCls.name}</p>
+    </div>
+    <div class="tab-bar">${tabs}</div>
+    <div id="tab-videos"  class="${first==='videos'?'fade-in':'hidden'}">${hv?buildVideos():''}</div>
+    <div id="tab-pdfs"    class="${first==='pdfs'?'fade-in':'hidden'}">${hp?buildPDFs():''}</div>
+    <div id="tab-mcqs"    class="${first==='mcqs'?'fade-in':'hidden'}">${hm?buildMCQs():''}</div>
+    <div id="tab-cqs"     class="${first==='cqs'?'fade-in':'hidden'}">${hc?buildCQs():''}</div>
+    <div id="tab-exam"    class="${first==='exam'?'fade-in':'hidden'}">${he?buildExam():''}</div>`;
+}
+
+function switchTab(name,btn){
+  ['videos','pdfs','mcqs','cqs','exam'].forEach(t=>{const e=document.getElementById('tab-'+t);if(e)e.className='hidden';});
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  const el=document.getElementById('tab-'+name);
+  if(el){el.className='fade-in';}
+  btn.classList.add('active');
+}
+
+/* ── VIDEOS ── */
+function buildVideos(){
+  const vs=curCh.videos;
+  if(!vs.length) return '<p style="color:#94a3b8;">No videos yet.</p>';
+  const pl=vs.map((v,i)=>`
+    <div class="pl-item ${i===0?'active':''}" id="pl-${i}" onclick="loadVid(${i})">
+      <div class="pl-num">${i+1}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;font-size:13px;color:#1e293b;line-height:1.3;">${v.title}</div>
+        ${v.description?`<div style="color:#94a3b8;font-size:11px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.description}</div>`:''}
+      </div>
+    </div>`).join('');
+
+  return `
+    <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start;">
+      <div style="flex:1;min-width:280px;">
+        <div style="background:#000;border-radius:16px;overflow:hidden;aspect-ratio:16/9;box-shadow:0 8px 32px rgba(0,0,0,.18);">
+          <iframe id="vid-player" width="100%" height="100%" src="" frameborder="0"
+            allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture"
+            allowfullscreen style="width:100%;height:100%;display:block;"></iframe>
+        </div>
+        <div style="background:white;border-radius:14px;border:1.5px solid #e8ecf4;padding:16px;margin-top:14px;">
+          <h3 id="vid-title" style="font-weight:700;font-size:16px;color:#111827;"></h3>
+          <p  id="vid-desc"  style="color:#64748b;font-size:13px;margin-top:5px;"></p>
+          <div style="display:flex;gap:10px;margin-top:14px;">
+            <button onclick="loadVid(vidIdx-1)" style="padding:9px 18px;background:#f5f7fb;border:1.5px solid #e8ecf4;border-radius:10px;font-size:13px;font-weight:700;color:#374151;cursor:pointer;font-family:inherit;">← Prev</button>
+            <button onclick="loadVid(vidIdx+1)" style="padding:9px 18px;background:var(--blue);border:none;border-radius:10px;font-size:13px;font-weight:700;color:white;cursor:pointer;font-family:inherit;">Next →</button>
+          </div>
+        </div>
+      </div>
+      <div style="width:256px;flex-shrink:0;">
+        <div style="background:white;border-radius:14px;border:1.5px solid #e8ecf4;overflow:hidden;">
+          <div style="padding:12px 14px;border-bottom:1px solid #f0f2f5;display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-weight:700;font-size:13px;color:#374151;">Playlist</span>
+            <span style="font-size:11px;color:#94a3b8;">${vs.length} videos</span>
+          </div>
+          <div style="padding:10px;max-height:420px;overflow-y:auto;">${pl}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function loadVid(i){
+  const vs=curCh.videos; if(i<0||i>=vs.length)return;
+  vidIdx=i; const v=vs[i];
+  const p=document.getElementById('vid-player'); if(p) p.src=embedURL(v.youtubeLink)+'?autoplay=1&rel=0';
+  const t=document.getElementById('vid-title'); if(t) t.textContent=v.title;
+  const d=document.getElementById('vid-desc');  if(d) d.textContent=v.description||'';
+  document.querySelectorAll('.pl-item').forEach((e,j)=>e.classList.toggle('active',j===i));
+}
+
+function embedURL(u){
+  if(!u) return '';
+  if(u.includes('youtube.com/embed/')) return u;
+  const m=u.match(/[?&]v=([^&#]+)/); if(m) return'https://www.youtube.com/embed/'+m[1];
+  const s=u.match(/youtu\.be\/([^?&#]+)/); if(s) return'https://www.youtube.com/embed/'+s[1];
+  return u;
+}
+
+/* ── PDFs ── */
+function buildPDFs(){
+  const ps=curCh.pdfs; if(!ps.length) return '<p style="color:#94a3b8;">No PDFs yet.</p>';
+  return ps.map(p=>`
+    <div style="background:white;border-radius:16px;border:1.5px solid #e8ecf4;overflow:hidden;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #f0f2f5;">
+        <div style="display:flex;align-items:center;gap:12px;"><span style="font-size:22px;">📄</span><span style="font-weight:700;color:#1e293b;">${p.title}</span></div>
+        <a href="${p.downloadLink}" target="_blank" style="display:flex;align-items:center;gap:6px;padding:8px 16px;background:var(--blue);color:white;text-decoration:none;border-radius:10px;font-size:13px;font-weight:700;">⬇ Download</a>
+      </div>
+      <div style="height:580px;"><iframe src="${p.driveLink}" width="100%" height="100%" frameborder="0" style="display:block;"></iframe></div>
+    </div>`).join('');
+}
+
+/* ── MCQs ── */
+function buildMCQs(){
+  const qs=curCh.mcqs; if(!qs.length) return '<p style="color:#94a3b8;">No MCQs yet.</p>';
+  const L=['A','B','C','D'];
+  let h=`
+    <div style="max-width:720px;">
+      <div style="background:white;border-radius:14px;border:1.5px solid #e8ecf4;padding:18px;margin-bottom:18px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <span style="font-weight:700;font-size:14px;color:#374151;">Quiz Progress</span>
+          <span id="mcq-prog-txt" style="font-size:12px;color:#94a3b8;">0 / ${qs.length} answered</span>
+        </div>
+        <div class="prog-bar"><div id="mcq-prog-fill" class="prog-fill" style="width:0%"></div></div>
+      </div>
+      <div id="mcq-list">`;
+  qs.forEach((q,qi)=>{
+    h+=`<div style="background:white;border-radius:14px;border:1.5px solid #e8ecf4;padding:20px;margin-bottom:14px;">
+      <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;">
+        <span style="flex-shrink:0;width:28px;height:28px;border-radius:50%;background:#eff4ff;color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;">${qi+1}</span>
+        <p style="font-weight:600;color:#1e293b;font-size:15px;line-height:1.55;">${q.question}</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">`;
+    q.options.forEach((op,oi)=>{
+      h+=`<div class="mcq-opt" id="opt-${q.id}-${oi}" onclick="pickMCQ('${q.id}',${oi},${q.correct})">
+        <span style="width:26px;height:26px;border-radius:50%;border:2px solid #e2e8f0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#64748b;flex-shrink:0;">${L[oi]}</span>
+        <span style="color:#374151;">${op}</span></div>`;
+    });
+    h+=`</div><div id="mfb-${q.id}" class="hidden" style="margin-top:10px;font-size:13px;font-weight:700;"></div></div>`;
+  });
+  h+=`</div>
+      <div id="mcq-actions" style="display:flex;gap:10px;margin-bottom:16px;">
+        <button onclick="submitMCQ()" style="padding:12px 28px;background:var(--blue);color:white;border:none;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Submit Quiz</button>
+        <button onclick="resetMCQ()"  style="padding:12px 20px;background:#f5f7fb;border:1.5px solid #e8ecf4;color:#374151;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Reset</button>
+      </div>
+      <div id="mcq-score" class="hidden"></div>
+    </div>`;
+  return h;
+}
+
+function pickMCQ(id,oi,correct){
+  if(mcqDone)return;
+  mcqAns[id]=oi;
+  const q=curCh.mcqs.find(m=>m.id===id);
+  q.options.forEach((_,i)=>document.getElementById(`opt-${id}-${i}`).classList.remove('selected'));
+  document.getElementById(`opt-${id}-${oi}`).classList.add('selected');
+  const total=curCh.mcqs.length,done=Object.keys(mcqAns).length;
+  document.getElementById('mcq-prog-fill').style.width=(done/total*100)+'%';
+  document.getElementById('mcq-prog-txt').textContent=`${done} / ${total} answered`;
+}
+
+function submitMCQ(){
+  mcqDone=true; const qs=curCh.mcqs; let sc=0;
+  qs.forEach(q=>{
+    const ua=mcqAns[q.id];
+    q.options.forEach((_,oi)=>{
+      const el=document.getElementById(`opt-${q.id}-${oi}`); el.onclick=null;
+      if(oi===q.correct) el.classList.add('ok');
+      else if(oi===ua&&ua!==q.correct) el.classList.add('ng');
+    });
+    const fb=document.getElementById('mfb-'+q.id); if(!fb)return;
+    if(ua===undefined){fb.textContent='⚠️ Not answered';fb.style.color='#d97706';}
+    else if(ua===q.correct){fb.textContent='✅ Correct!';fb.style.color='#10b981';sc++;}
+    else{fb.textContent=`❌ Incorrect — Correct: ${q.options[q.correct]}`;fb.style.color='#ef4444';}
+    fb.classList.remove('hidden');
+  });
+  const pct=Math.round(sc/qs.length*100);
+  const em=pct>=80?'🏆':pct>=60?'👍':pct>=40?'📚':'💪';
+  const msg=pct>=80?'Excellent work!':pct>=60?'Good job!':pct>=40?'Keep studying!':'More practice needed!';
+  document.getElementById('mcq-score').innerHTML=`
+    <div class="score-card">
+      <div style="font-size:52px;margin-bottom:10px;">${em}</div>
+      <div style="font-size:36px;font-weight:800;margin-bottom:4px;">${sc} / ${qs.length}</div>
+      <div style="font-size:16px;color:rgba(255,255,255,.75);margin-bottom:16px;">${pct}% — ${msg}</div>
+      <div style="background:rgba(255,255,255,.2);border-radius:99px;height:8px;">
+        <div style="background:white;border-radius:99px;height:8px;width:${pct}%;transition:width .8s ease;"></div>
+      </div>
+    </div>`;
+  document.getElementById('mcq-score').classList.remove('hidden');
+  document.getElementById('mcq-actions').innerHTML=`<button onclick="resetMCQ()" style="padding:12px 24px;background:#f5f7fb;border:1.5px solid #e8ecf4;color:#374151;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Try Again</button>`;
+  document.getElementById('mcq-score').scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+function resetMCQ(){
+  mcqAns={}; mcqDone=false;
+  const t=document.getElementById('tab-mcqs'); if(t){t.innerHTML=buildMCQs();t.className='fade-in';}
+}
+
+/* ── CQs ── */
+function buildCQs(){
+  const qs=curCh.cqs; if(!qs.length) return '<p style="color:#94a3b8;">No written questions yet.</p>';
+  let h='<div style="max-width:720px;display:flex;flex-direction:column;gap:16px;">';
+  qs.forEach((q,qi)=>{
+    const ha=q.answer&&q.answer.trim()!=='';
+    h+=`<div class="cq-card">
+      <div style="padding:20px;">
+        <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;">
+          <span style="flex-shrink:0;padding:3px 10px;background:#eff4ff;color:var(--blue);border-radius:99px;font-size:12px;font-weight:800;">Q${qi+1}</span>
+          <p style="font-weight:600;color:#1e293b;font-size:15px;line-height:1.6;">${q.question}</p>
+        </div>
+        <button onclick="revealCQ('${q.id}')" style="padding:8px 18px;background:#eff4ff;border:1.5px solid #c7d9ff;color:var(--blue);border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;">💡 Show Answer</button>
+      </div>
+      <div id="cqa-${q.id}" class="hidden" style="padding:0 20px 20px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;">Model Answer</span>
+          ${!ha?'<span class="ai-badge">✨ AI Suggested</span>':''}
+        </div>
+        <div class="ans-box">${ha?esc(q.answer):aiAns(q.question)}</div>
+      </div>
+    </div>`;
+  });
+  return h+'</div>';
+}
+
+function revealCQ(id){const e=document.getElementById('cqa-'+id);if(e){e.classList.toggle('hidden');e.classList.add('fade-in');}}
+
+function aiAns(q){return`<span style="color:#94a3b8;font-style:italic;">AI-simulated answer for: "${esc(q)}"<br><br>Suggested approach:<br>1. Define the key terms.<br>2. Explain with examples.<br>3. Use formulas/diagrams if applicable.<br>4. Summarise your points.<br><br><em>Add a model answer in Admin → CQ for accurate content.</em></span>`;}
+
+/* ── EXAM ── */
+function buildExam(){
+  const lnk=curCh.examLink; if(!lnk||!lnk.trim()) return '<p style="color:#94a3b8;">No exam configured.</p>';
+  return `<div style="max-width:480px;margin:40px auto;text-align:center;">
+    <div style="font-size:64px;margin-bottom:16px;">📝</div>
+    <h3 style="font-size:24px;font-weight:800;color:#111827;margin-bottom:8px;">Chapter Exam</h3>
+    <p style="color:#64748b;margin-bottom:28px;">Ready? The exam opens in Google Forms.</p>
+    <a href="${lnk}" target="_blank" rel="noopener noreferrer"
+       style="display:inline-flex;align-items:center;gap:10px;padding:14px 32px;background:var(--blue);color:white;border-radius:14px;font-size:16px;font-weight:800;text-decoration:none;box-shadow:0 6px 20px rgba(59,110,248,.35);">
+      🚀 Start Exam
+    </a>
+    <p style="color:#94a3b8;font-size:12px;margin-top:16px;">Opens in a new tab · Sign in to Google first</p>
+  </div>`;
+}
+
+/* ── UTILS ── */
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');}
+
+/* ══════════════════════════════════════
+   PWA — Service Worker + Install Prompt
+   ══════════════════════════════════════ */
+let _deferredInstall = null;
+
+/* Register service worker */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.warn('SW registration failed:', err));
+  });
+}
+
+/* Capture the browser's install prompt */
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _deferredInstall = e;
+  /* Show banner after 3 seconds if not already installed */
+  const dismissed = sessionStorage.getItem('installDismissed');
+  if (!dismissed) {
+    setTimeout(() => {
+      document.getElementById('install-banner').classList.add('show');
+    }, 3000);
+  }
+});
+
+/* Install button click */
+document.getElementById('install-btn').addEventListener('click', async () => {
+  if (_deferredInstall) {
+    _deferredInstall.prompt();
+    const { outcome } = await _deferredInstall.userChoice;
+    if (outcome === 'accepted') {
+      document.getElementById('install-banner').classList.remove('show');
+    }
+    _deferredInstall = null;
+  }
+});
+
+/* Dismiss button */
+document.getElementById('install-close').addEventListener('click', () => {
+  document.getElementById('install-banner').classList.remove('show');
+  sessionStorage.setItem('installDismissed', '1');
+});
+
+/* Hide banner once app is installed */
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-banner').classList.remove('show');
+  _deferredInstall = null;
+});
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+{
+  "name": "EduLearn — Learning Portal",
+  "short_name": "EduLearn",
+  "description": "Your complete learning portal — videos, MCQs, written Q&A and more.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a2340",
+  "theme_color": "#3b6ef8",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "categories": ["education"],
+  "shortcuts": [
+    {
+      "name": "Video Lessons",
+      "short_name": "Videos",
+      "description": "Go to video lessons",
+      "url": "./index.html#videos",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "MCQ Quizzes",
+      "short_name": "MCQs",
+      "description": "Practice MCQ quizzes",
+      "url": "./index.html#mcqs",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

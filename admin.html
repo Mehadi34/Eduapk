@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduLearn — Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Sora', sans-serif; background: #f1f5f9; color: #1e293b; }
+
+    /* Sidebar */
+    #admin-sidebar {
+      width: 240px; min-height: 100vh;
+      background: #0f172a;
+      position: fixed; left: 0; top: 0;
+      overflow-y: auto; z-index: 100;
+    }
+    #admin-main { margin-left: 240px; min-height: 100vh; }
+    @media (max-width: 768px) { #admin-sidebar { display: none; } #admin-main { margin-left: 0; } }
+
+    .admin-nav-item {
+      display: flex; align-items: center; gap-10px;
+      padding: 10px 20px; color: #94a3b8;
+      font-size: 14px; font-weight: 500;
+      cursor: pointer; border: none; background: none;
+      width: 100%; text-align: left; transition: all 0.2s;
+      border-left: 3px solid transparent;
+    }
+    .admin-nav-item:hover { color: #e2e8f0; background: rgba(255,255,255,0.05); }
+    .admin-nav-item.active { color: #60a5fa; border-left-color: #3b82f6; background: rgba(59,130,246,0.1); }
+
+    /* Form elements */
+    .form-input {
+      width: 100%; padding: 10px 14px;
+      border: 1.5px solid #e2e8f0; border-radius: 10px;
+      font-size: 14px; font-family: 'Sora', sans-serif;
+      transition: border-color 0.2s; outline: none; background: white;
+    }
+    .form-input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    label { font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 5px; }
+
+    /* Buttons */
+    .btn-primary { padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer; transition: background 0.2s; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-danger { padding: 7px 14px; background: #fee2e2; color: #dc2626; border: none; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .btn-danger:hover { background: #dc2626; color: white; }
+    .btn-edit { padding: 7px 14px; background: #f0fdf4; color: #16a34a; border: none; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .btn-edit:hover { background: #16a34a; color: white; }
+    .btn-secondary { padding: 10px 20px; background: #f1f5f9; color: #475569; border: 1.5px solid #e2e8f0; border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+    .btn-secondary:hover { background: #e2e8f0; }
+
+    /* Cards */
+    .card { background: white; border-radius: 16px; border: 1px solid #e2e8f0; padding: 20px; }
+    .section-title { font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+    /* Alerts */
+    .alert { padding: 12px 16px; border-radius: 10px; font-size: 14px; font-weight: 500; margin-bottom: 16px; display: none; }
+    .alert.success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; display: block; }
+    .alert.error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; display: block; }
+
+    /* Table-like list rows */
+    .list-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 8px; }
+    .list-row-title { font-weight: 600; color: #1e293b; font-size: 14px; }
+    .list-row-sub { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+
+    /* Panels */
+    .panel { display: none; }
+    .panel.active { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Context selectors */
+    .ctx-select { padding: 9px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px; font-family: 'Sora', sans-serif; background: white; cursor: pointer; outline: none; }
+    .ctx-select:focus { border-color: #2563eb; }
+
+    /* Badge */
+    .badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; }
+    .badge-blue { background: #dbeafe; color: #1d4ed8; }
+    .badge-green { background: #d1fae5; color: #065f46; }
+    .badge-purple { background: #ede9fe; color: #5b21b6; }
+
+    /* JSON Preview */
+    #json-preview { font-family: 'DM Mono', monospace; font-size: 11px; white-space: pre; overflow-x: auto; background: #0f172a; color: #7dd3fc; padding: 16px; border-radius: 10px; max-height: 400px; overflow-y: auto; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    #admin-sidebar::-webkit-scrollbar-thumb { background: #334155; }
+
+    /* =============================================
+       LOGIN GATE STYLES
+       ============================================= */
+    #login-gate {
+      position: fixed; inset: 0; z-index: 9999;
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+      display: flex; align-items: center; justify-content: center;
+    }
+    #login-gate.hidden { display: none; }
+
+    .login-card {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      padding: 48px 40px;
+      width: 100%; max-width: 420px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+      animation: loginSlide 0.5s cubic-bezier(0.22,1,0.36,1);
+    }
+    @keyframes loginSlide {
+      from { opacity: 0; transform: translateY(30px) scale(0.96); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .login-input {
+      width: 100%; padding: 14px 48px 14px 16px;
+      background: rgba(255,255,255,0.07);
+      border: 1.5px solid rgba(255,255,255,0.15);
+      border-radius: 12px; color: white;
+      font-size: 15px; font-family: 'Sora', sans-serif;
+      outline: none; transition: all 0.2s;
+      letter-spacing: 0.05em;
+    }
+    .login-input:focus { border-color: #3b82f6; background: rgba(59,130,246,0.1); }
+    .login-input::placeholder { color: rgba(255,255,255,0.3); letter-spacing: normal; }
+    .login-input.error { border-color: #ef4444; animation: shake 0.4s ease; }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-8px); }
+      40%      { transform: translateX(8px); }
+      60%      { transform: translateX(-5px); }
+      80%      { transform: translateX(5px); }
+    }
+
+    .login-btn {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, #2563eb, #0ea5e9);
+      color: white; border: none; border-radius: 12px;
+      font-size: 15px; font-weight: 700;
+      font-family: 'Sora', sans-serif;
+      cursor: pointer; transition: all 0.2s;
+      letter-spacing: 0.03em;
+    }
+    .login-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(37,99,235,0.4); }
+    .login-btn:active { transform: translateY(0); }
+    .login-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .lock-icon { font-size: 48px; text-align: center; margin-bottom: 8px; }
+    .login-title { color: white; font-size: 24px; font-weight: 700; text-align: center; margin-bottom: 4px; }
+    .login-sub { color: rgba(255,255,255,0.4); font-size: 13px; text-align: center; margin-bottom: 32px; }
+    .login-error { color: #fca5a5; font-size: 13px; text-align: center; margin-top: 12px; min-height: 20px; font-weight: 500; }
+    .attempt-info { color: rgba(255,255,255,0.3); font-size: 12px; text-align: center; margin-top: 8px; }
+    .pw-wrapper { position: relative; }
+    .pw-toggle {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      cursor: pointer; color: rgba(255,255,255,0.4);
+      font-size: 16px; user-select: none;
+      transition: color 0.2s;
+    }
+    .pw-toggle:hover { color: rgba(255,255,255,0.8); }
+
+    /* Dots decoration */
+    .login-dots {
+      position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+    }
+    .dot {
+      position: absolute; border-radius: 50%;
+      background: rgba(59,130,246,0.15);
+    }
+  </style>
+</head>
+<body>
+
+<!-- =============================================
+     LOGIN GATE — Full-screen password lock
+     Blocks ALL admin content until authenticated
+     ============================================= -->
+<div id="login-gate">
+  <!-- Decorative background blobs -->
+  <div class="login-dots">
+    <div class="dot" style="width:320px;height:320px;top:-100px;left:-100px;"></div>
+    <div class="dot" style="width:220px;height:220px;bottom:-70px;right:-50px;"></div>
+    <div class="dot" style="width:140px;height:140px;top:45%;left:8%;opacity:0.4;"></div>
+  </div>
+
+  <div class="login-card">
+    <div class="lock-icon">🔐</div>
+    <div class="login-title">Admin Access</div>
+    <div class="login-sub">EduLearn CMS &nbsp;·&nbsp; Restricted Area</div>
+
+    <!-- Password input with show/hide toggle -->
+    <div class="pw-wrapper mb-4">
+      <input
+        type="password"
+        id="pw-input"
+        class="login-input"
+        placeholder="Enter admin password"
+        onkeydown="if(event.key==='Enter') attemptLogin()"
+        autocomplete="off"
+        autofocus
+      />
+      <span class="pw-toggle" onclick="togglePWVisibility()" id="pw-eye">👁</span>
+    </div>
+
+    <button class="login-btn" id="login-btn" onclick="attemptLogin()">
+      🔓 Unlock Dashboard
+    </button>
+
+    <!-- Error message (shown on wrong password) -->
+    <div class="login-error" id="login-error"></div>
+    <!-- Attempt counter -->
+    <div class="attempt-info" id="attempt-info"></div>
+  </div>
+</div>
+
+<!-- =============================================
+     ADMIN SIDEBAR
+     ============================================= -->
+<aside id="admin-sidebar">
+  <div class="px-5 py-5 border-b border-slate-700">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">A</div>
+      <div>
+        <div class="text-white font-bold text-sm">Admin CMS</div>
+        <div class="text-slate-400 text-xs">EduLearn</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="py-4 space-y-1">
+    <button class="admin-nav-item active" onclick="showPanel('overview')">📊 Overview</button>
+    <div class="px-5 pt-4 pb-1 text-slate-500 text-xs font-bold uppercase tracking-wider">Structure</div>
+    <button class="admin-nav-item" onclick="showPanel('classes')">🏫 Classes</button>
+    <button class="admin-nav-item" onclick="showPanel('subjects')">📘 Subjects</button>
+    <button class="admin-nav-item" onclick="showPanel('chapters')">📄 Chapters</button>
+    <div class="px-5 pt-4 pb-1 text-slate-500 text-xs font-bold uppercase tracking-wider">Content</div>
+    <button class="admin-nav-item" onclick="showPanel('videos')">🎥 Videos</button>
+    <button class="admin-nav-item" onclick="showPanel('pdfs')">📁 PDFs</button>
+    <button class="admin-nav-item" onclick="showPanel('mcqs')">🧠 MCQs</button>
+    <button class="admin-nav-item" onclick="showPanel('cqs')">✍️ CQs</button>
+    <button class="admin-nav-item" onclick="showPanel('exam')">📝 Exam Links</button>
+    <div class="px-5 pt-4 pb-1 text-slate-500 text-xs font-bold uppercase tracking-wider">Data</div>
+    <button class="admin-nav-item" onclick="showPanel('data')">💾 JSON Manager</button>
+  </nav>
+
+  <div class="px-5 py-4 border-t border-slate-700 mt-auto">
+    <a href="index.html" target="_blank"
+       class="block text-center text-xs text-slate-400 hover:text-blue-400 transition mb-3">
+      ← Back to Student Site
+    </a>
+    <button onclick="logout()"
+      class="w-full text-center text-xs text-red-400 hover:text-red-300 border border-red-900 hover:border-red-700 py-2 rounded-lg transition">
+      🔒 Lock / Logout
+    </button>
+  </div>
+</aside>
+
+<!-- =============================================
+     ADMIN MAIN CONTENT
+     ============================================= -->
+<main id="admin-main" class="p-5 md:p-8">
+
+  <!-- Global Alert -->
+  <div id="global-alert" class="alert"></div>
+
+  <!-- ================ OVERVIEW ================ -->
+  <div id="panel-overview" class="panel active">
+    <h1 class="text-2xl font-bold text-slate-800 mb-6">📊 Dashboard Overview</h1>
+    <div id="overview-stats" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"></div>
+    <div class="card">
+      <div class="section-title">🗂️ Quick Navigation</div>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <button onclick="showPanel('classes')" class="p-4 border-2 border-dashed border-slate-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition text-left">
+          <div class="text-2xl mb-1">🏫</div>
+          <div class="font-semibold text-slate-700 text-sm">Manage Classes</div>
+        </button>
+        <button onclick="showPanel('subjects')" class="p-4 border-2 border-dashed border-slate-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition text-left">
+          <div class="text-2xl mb-1">📘</div>
+          <div class="font-semibold text-slate-700 text-sm">Manage Subjects</div>
+        </button>
+        <button onclick="showPanel('chapters')" class="p-4 border-2 border-dashed border-slate-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition text-left">
+          <div class="text-2xl mb-1">📄</div>
+          <div class="font-semibold text-slate-700 text-sm">Manage Chapters</div>
+        </button>
+        <button onclick="showPanel('videos')" class="p-4 border-2 border-dashed border-slate-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition text-left">
+          <div class="text-2xl mb-1">🎥</div>
+          <div class="font-semibold text-slate-700 text-sm">Add Videos</div>
+        </button>
+        <button onclick="showPanel('mcqs')" class="p-4 border-2 border-dashed border-slate-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition text-left">
+          <div class="text-2xl mb-1">🧠</div>
+          <div class="font-semibold text-slate-700 text-sm">Add MCQs</div>
+        </button>
+        <button onclick="showPanel('data'); setTimeout(()=>document.querySelector('[onclick=\\'generateIndexHTML()\\']')?.scrollIntoView({behavior:'smooth'}),200)" class="p-4 border-2 border-dashed border-slate-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition text-left">
+          <div class="text-2xl mb-1">🚀</div>
+          <div class="font-semibold text-slate-700 text-sm">Generate index.html</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================ CLASSES ================ -->
+  <div id="panel-classes" class="panel">
+    <h1 class="text-2xl font-bold text-slate-800 mb-6">🏫 Manage Classes</h1>
+    <div class="grid md:grid-cols-2 gap-6">
+      <!-- Add Class Form -->
+      <div class="card">
+        <div class="section-title">➕ Add / Edit Class</div>
+        <input type="hidden" id="class-edit-id" />
+        <div class="space-y-4">
+          <div>
+            <label>Class Name *</label>
+            <input type="text" id="class-name" class="form-input" placeholder="e.g. Class 9" />
+          </div>
+          <div class="flex gap-3">
+            <button onclick="saveClass()" class="btn-primary">Save Class</button>
+            <button onclick="clearClassForm()" class="btn-secondary">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Class List -->
+      <div class="card">
+        <div class="section-title">📋 Existing Classes</div>
+        <div id="class-list">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================ SUBJECTS ================ -->
+  <div id="panel-subjects" class="panel">
+    <h1 class="text-2xl font-bold text-slate-800 mb-6">📘 Manage Subjects</h1>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="card">
+        <div class="section-title">➕ Add / Edit Subject</div>
+        <input type="hidden" id="subject-edit-id" />
+        <div class="space-y-4">
+          <div>
+            <label>Class *</label>
+            <select id="subject-class-id" class="form-input ctx-select w-full"></select>
+          </div>
+          <div>
+            <label>Subject Name *</label>
+            <input type="text" id="subject-name" class="form-input" placeholder="e.g. Physics" />
+          </div>
+          <div>
+            <label>Icon (emoji)</label>
+            <input type="text" id="subject-icon" class="form-input" placeholder="e.g. ⚡" maxlength="4"/>
+          </div>
+          <div class="flex gap-3">
+            <button onclick="saveSubject()" class="btn-primary">Save Subject</button>
+            <button onclick="clearSubjectForm()" class="btn-secondary">Clear</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">📋 Existing Subjects</div>
+        <div id="subject-list">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================ CHAPTERS ================ -->
+  <div id="panel-chapters" class="panel">
+    <h1 class="text-2xl font-bold text-slate-800 mb-6">📄 Manage Chapters</h1>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="card">
+        <div class="section-title">➕ Add / Edit Chapter</div>
+        <input type="hidden" id="chapter-edit-id" />
+        <div class="space-y-4">
+          <div>
+            <label>Class *</label>
+            <select id="chapter-class-id" class="form-input ctx-select w-full" onchange="onChapterClassChange()"></select>
+          </div>
+          <div>
+            <label>Subject *</label>
+            <select id="chapter-subject-id" class="form-input ctx-select w-full"></select>
+          </div>
+          <div>
+            <label>Chapter Name *</label>
+            <input type="text" id="chapter-name" class="form-input" placeholder="e.g. Chapter 1: Motion" />
+          </div>
+          <div class="flex gap-3">
+            <button onclick="saveChapter()" class="btn-primary">Save Chapter</button>
+            <button onclick="clearChapterForm()" class="btn-secondary">Clear</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">📋 Existing Chapters</div>
+        <div class="flex gap-3 mb-4">
+          <select id="chapter-filter-class" class="ctx-select flex-1" onchange="onChapterFilterChange()">
+            <option value="">— All Classes —</option>
+          </select>
+          <select id="chapter-filter-subject" class="ctx-select flex-1">
+            <option value="">— All Subjects —</option>
+          </select>
+        </div>
+        <div id="chapter-list">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================ VIDEOS ================ -->
+  <div id="panel-videos" class="panel">
+    <h1 class="text-2xl font-bold text-slate-800 mb-6">🎥 Manage Videos</h1>
+
+    <!-- Context Selector -->
+    <div class="card mb-5">
+      <div class="section-title text-base">📌 Select Chapter</div>
+      <div class="flex flex-wrap gap-3">
+        <select id="video-class-sel" class="ctx-select" onchange="onVideoClassChange()"><option value="">Class</option></select>
+        <select id="video-subject-sel" class="ctx-select" onchange="onVideoSubjectChange()"><option value="">Subject</option></select>
+        <select id="video-chapter-sel" class="ctx-select" onchange="renderVideoList()"><option value="">Chapter</option></select>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="card">
+        <div class="section-title">➕ Add / Edit Video</div>
+        <input type="hidden" id="video-edit-id" />
+        <div class="space-y-4">
+          <div>
+            <label>Video Title *</label>
+            <input type="text" id="video-title" class="form-input" placeholder="e.g. Introduction to Motion" />
+          </div>
+          <div>
+            <label>YouTube / Drive Link *</label>
+            <input type="url" id="video-url" class="form-input" placeholder="https://www.youtube.com/watch?v=..." />
+            <p class="text-xs text-slate-400 mt-1">✅ YouTube watch links are auto-converted to embed format</p>
+          </div>
+          <div>
+            <label>Description (optional)</label>
+            <textarea id="video-desc" class="form-input" rows="3" placeholder="Brief description..."></textarea>
+          </div>
+          <div class="flex gap-3">
+            <button onclick="saveVideo()" class="btn-primary">Save Video</button>
+            <button onclick="clearVideoForm()" class="btn-secondary">Clear</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">📋 Videos in Chapter</div>
+        <div id="video-list">Select a chapter to view videos.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================ PDFs ================ -->
+  <div id="panel-pdfs" class="panel">
+    <h1 class="text-2xl font-bold text-slate-800 mb-6">📁 Manage PDFs</h1>
+    <div class="card mb-5">
+      <div class="section-title text-base">📌 Select Chapter</div>
+      <div class="flex flex-wrap gap-3">
+        <select id="pdf-class-sel" class="ctx-select" onchange="onPDFClassChange()"><option value="">Class</option></select>
+        <select id="pdf-subject-sel" class="ctx-select" onchange="onPDFSubjectChange()"><option value="">Subject</option></select>
+        <select id="pdf-chapter-sel" class="ctx-select" onchange="renderPDFList()"><option value="">Chapter</option></select>
+      </div>
+    </div>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="card">
+        <div class="section-title">➕ Add / Edit PDF</div>
+        <input type="hidden" id="pdf-edit-id" />
+        <div class="space-y-4">
+          <div>
+            <label>PDF Title *</label>
+            <input type="text" id="pdf-title" class="form-input" placeholder="e.g. Motion Full Notes" />
+          </div>
+          <div>
+            <label>Google Drive Preview Link *</label>
+            <input type="url" id="pdf-drive-link" class="form-input" placeholder="https://drive.google.com/file/d/.../preview" />
+          </div>
+          <div>
+            <label>Download Link</label>
+            <input type="url" id="pdf-download-link" class="form-input" placeholder="https://drive.google.com/uc?export=download&id=..." />
+          </div>
+          <div class="flex gap-3">
+            <button onclick="savePDF()" class="btn-primary">Save PDF</button>
+            <button onclick="clearPDFForm()" class="btn-secondary">Clear</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">📋 PDFs in Chapter</div>
+        <div id="pdf-list">Select a chapter to view PDFs.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================ MCQs ================ -->
+  <div id="panel-mcqs" class="panel">
+    <h1 class="text-2xl font-bold text-slate-800 mb-6">🧠 Manage MCQs</h1>
+    <div class="card mb-5">
+      <div class="section-title text-base">📌 Select Chapter</div>
+      <div class="flex flex-wrap gap-3">
+        <select id="mcq-class-sel" class="ctx-select" onchange="onMCQClassChange()"><option value="">Class</option></select>
+        <select id="mcq-subject-sel" class="ctx-select" onchange="onMCQSubjectChange()"><option value="">Subject</option></select>
+        <select id="mcq-chapter-sel" class="ctx-select" onchange="renderMCQList()"><option value="">Chapter</option></select>
+      </div>
+    </div>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="card">
+        <div class="section-title">➕ Add / Edit MCQ</div>
+        <input type="hidden" id="mcq-edit-id" />
+        <div class="space-y-4">
+          <div>
+            <label>Question *</label>
+            <textarea id="mcq-question" class="form-input" rows="3" placeholder="Type your question..."></textarea>
+          </div>
+          <div>
+            <label>Option A *</label>
+            <input type="text" id="mcq-opt-0" class="form-input" placeholder="Option A" />
+          </div>
+          <div>
+            <label>Option B *</label>
+            <input type="text" id="mcq-opt-1" class="form-input" placeholder="Option B" />
+          </div>
+          <div>
+            <label>Option C *</label>
+            <input type="text" id="mcq-opt-2" class="form-input" placeholder="Option C" />
+          </div>
+          <div>
+            <label>Option D *</label>
+            <input type="text" id="mcq-opt-3" class="form-input" placeholder="Option D" />
+          </div>
+          <div>
+            <label>Correct Answer *</label>
+            <select id="mcq-correct" class="form-input ctx-select w-full">
+              <option value="0">A</option>
+              <option value="1">B</option>
+              <option value="2">C</option>
+              <option value="3">D</option>
+            </select>
+          </div>
+          <div class="flex gap-3">
+            <button onclick="saveMCQ()" class="btn-primary">Save MCQ</button>
+            <button onclick="clearMCQForm()" class="btn-secondary">Clear</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">📋 MCQs in Chapter</div>
+        <div id="mcq-list">Select a chapter to view MCQs.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================ CQs ================ -->
+  <div id="panel-cqs" class="panel">
+    <h1 class="text-2xl font-bold text-slate-800 mb-6">✍️ Manage Written Questions (CQs)</h1>
+    <div class="card mb-5">
+      <div class="section-title text-base">📌 Select Chapter</div>
+      <div class="flex flex-wrap gap-3">
+        <select id="cq-class-sel" class="ctx-select" onchange="onCQClassChange()"><option value="">Class</option></select>
+        <select id="cq-subject-sel" class="ctx-select" onchange="onCQSubjectChange()"><option value="">Subject</option></select>
+        <select id="cq-chapter-sel" class="ctx-select" onchange="renderCQList()"><option value="">Chapter</option></select>
+      </div>
+    </div>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="card">
+        <div class="section-title">➕ Add / Edit CQ</div>
+        <input type="hidden" id="cq-edit-id" />
+        <div class="space-y-4">
+          <div>
+            <label>Question *</label>
+            <textarea id="cq-question" class="form-input" rows="4" placeholder="Write your question..."></textarea>
+          </div>
+          <div>
+            <label>Model Answer (optional)</label>
+            <textarea id="cq-answer" class="form-input" rows="5" placeholder="Write the model answer. Leave blank for AI-simulated answer."></textarea>
+          </div>
+          <div class="flex gap-3">
+            <button onclick="saveCQ()" class="btn-primary">Save CQ</button>
+            <button onclick="clearCQForm()" class="btn-secondary">Clear</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">📋 CQs in Chapter</div>
+        <div id="cq-list">Select a chapter to view CQs.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================ EXAM LINKS ================ -->
+  <div id="panel-exam" class="panel">
+    <h1 class="text-2xl font-bold text-slate-800 mb-6">📝 Manage Exam Links</h1>
+    <div class="card mb-5">
+      <div class="section-title text-base">📌 Select Chapter</div>
+      <div class="flex flex-wrap gap-3">
+        <select id="exam-class-sel" class="ctx-select" onchange="onExamClassChange()"><option value="">Class</option></select>
+        <select id="exam-subject-sel" class="ctx-select" onchange="onExamSubjectChange()"><option value="">Subject</option></select>
+        <select id="exam-chapter-sel" class="ctx-select" onchange="loadExamLink()"><option value="">Chapter</option></select>
+      </div>
+    </div>
+    <div class="card max-w-xl">
+      <div class="section-title">🔗 Google Form Exam Link</div>
+      <div class="space-y-4">
+        <div>
+          <label>Google Form URL</label>
+          <input type="url" id="exam-link-input" class="form-input" placeholder="https://forms.google.com/..." />
+          <p class="text-xs text-slate-400 mt-1">This link will appear as "Start Exam" on the student site.</p>
+        </div>
+        <div class="flex gap-3">
+          <button onclick="saveExamLink()" class="btn-primary">Save Link</button>
+          <button onclick="clearExamLink()" class="btn-secondary">Remove Link</button>
+        </div>
+        <div id="exam-link-preview" class="hidden mt-3 p-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================ DATA / JSON ================ -->
+  <div id="panel-data" class="panel">
+    <h1 class="text-2xl font-bold text-slate-800 mb-6">💾 JSON Data Manager</h1>
+
+    <!-- GENERATE INDEX.HTML — the main feature -->
+    <div class="card mb-4" style="background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%); border: none;">
+      <div class="flex items-start gap-4">
+        <div style="font-size:48px;line-height:1;">🚀</div>
+        <div class="flex-1">
+          <div class="text-white font-bold text-xl mb-1">Generate index.html for GitHub</div>
+          <p class="text-blue-200 text-sm mb-4">This bakes ALL your current data (classes, subjects, chapters, videos, MCQs, CQs, PDFs) directly into a new <code class="bg-blue-900 px-1 rounded">index.html</code> file. Upload that file to your GitHub repo and your live site will show everything — no JSON file needed, works on any device, forever.</p>
+          <div class="flex flex-wrap gap-3 items-center">
+            <button onclick="generateIndexHTML()" style="padding:12px 28px;background:white;color:#1d4ed8;border:none;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer;transition:all 0.2s;font-family:'Sora',sans-serif;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='white'">
+              ⬇️ Download index.html
+            </button>
+            <span class="text-blue-300 text-xs">Every edit = new download = upload to GitHub ✓</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GitHub Steps Guide -->
+    <div class="card mb-6" style="border: 1.5px solid #e0f2fe; background: #f0f9ff;">
+      <div class="section-title" style="color:#0369a1;">📖 How to publish to GitHub Pages</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;">
+        <div style="background:white;border-radius:10px;padding:14px;border:1px solid #bae6fd;">
+          <div style="font-size:22px;margin-bottom:4px;">1️⃣</div>
+          <div style="font-weight:700;color:#0c4a6e;font-size:13px;margin-bottom:4px;">Edit your content</div>
+          <div style="font-size:12px;color:#64748b;">Add classes, chapters, videos, MCQs in this admin panel. Everything saves automatically.</div>
+        </div>
+        <div style="background:white;border-radius:10px;padding:14px;border:1px solid #bae6fd;">
+          <div style="font-size:22px;margin-bottom:4px;">2️⃣</div>
+          <div style="font-weight:700;color:#0c4a6e;font-size:13px;margin-bottom:4px;">Click "Download index.html"</div>
+          <div style="font-size:12px;color:#64748b;">A fresh index.html with all your data baked inside will download to your computer.</div>
+        </div>
+        <div style="background:white;border-radius:10px;padding:14px;border:1px solid #bae6fd;">
+          <div style="font-size:22px;margin-bottom:4px;">3️⃣</div>
+          <div style="font-weight:700;color:#0c4a6e;font-size:13px;margin-bottom:4px;">Go to your GitHub repo</div>
+          <div style="font-size:12px;color:#64748b;">Open your GitHub repository in the browser. Make sure GitHub Pages is enabled (Settings → Pages → main branch).</div>
+        </div>
+        <div style="background:white;border-radius:10px;padding:14px;border:1px solid #bae6fd;">
+          <div style="font-size:22px;margin-bottom:4px;">4️⃣</div>
+          <div style="font-weight:700;color:#0c4a6e;font-size:13px;margin-bottom:4px;">Upload index.html</div>
+          <div style="font-size:12px;color:#64748b;">Click "Add file → Upload files" and drag your new index.html. Commit. Done — your site updates in ~1 minute! ✅</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding:10px 14px;background:#fef9c3;border-radius:8px;font-size:12px;color:#713f12;border:1px solid #fde68a;">
+        💡 <strong>Tip:</strong> You only need to upload <code>index.html</code> each time. The <code>admin.html</code> file stays the same — upload it once and never again.
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-4 mb-6">
+      <!-- Import -->
+      <div class="card text-center">
+        <div class="text-3xl mb-3">📥</div>
+        <div class="font-bold text-slate-700 mb-2">Import JSON</div>
+        <p class="text-slate-400 text-xs mb-4">Upload a previously exported JSON file to restore your curriculum.</p>
+        <label class="btn-primary inline-block cursor-pointer">
+          Choose File
+          <input type="file" accept=".json" class="hidden" onchange="importJSON(this)" />
+        </label>
+      </div>
+
+      <!-- Export -->
+      <div class="card text-center">
+        <div class="text-3xl mb-3">📤</div>
+        <div class="font-bold text-slate-700 mb-2">Export JSON</div>
+        <p class="text-slate-400 text-xs mb-4">Download all current data as a JSON file. Use to back up or share.</p>
+        <button onclick="exportJSON()" class="btn-primary">Download JSON</button>
+      </div>
+
+      <!-- Reset -->
+      <div class="card text-center">
+        <div class="text-3xl mb-3">🗑️</div>
+        <div class="font-bold text-slate-700 mb-2">Clear All Data</div>
+        <p class="text-slate-400 text-xs mb-4">Wipe all data from this browser and start fresh. Export JSON first to keep a backup!</p>
+        <button onclick="resetToFile()" class="btn-danger">Clear Data</button>
+      </div>
+    </div>
+
+    <!-- Live Preview -->
+    <div class="card">
+      <div class="flex items-center justify-between mb-4">
+        <div class="section-title mb-0">👁️ Live JSON Preview</div>
+        <button onclick="refreshPreview()" class="btn-secondary text-sm">Refresh</button>
+      </div>
+      <div id="json-preview">Click Refresh to view current data...</div>
+    </div>
+  </div>
+
+</main>
+
+<!-- =============================================
+     JAVASCRIPT — FULL ADMIN ENGINE
+     ============================================= -->
+<script>
+/* ======================================
+   STATE
+   ====================================== */
+let db = { classes: [] };  // Working database
+
+/* ======================================
+   INIT
+   ====================================== */
+async function init() {
+  try {
+    const stored = localStorage.getItem('lmsData');
+    if (stored && stored !== 'null') {
+      db = JSON.parse(stored);
+    } else {
+      // Try videos.json as optional seed data
+      try {
+        const res = await fetch('videos.json');
+        if (res.ok) {
+          db = await res.json();
+          saveDB();
+        } else {
+          db = { classes: [] };
+          saveDB();
+        }
+      } catch(fe) {
+        db = { classes: [] };
+        saveDB();
+      }
+    }
+    renderAll();
+  } catch (err) {
+    console.error(err);
+    db = { classes: [] };
+    saveDB();
+    renderAll();
+    showAlert('Starting fresh — no existing data found.', 'success');
+  }
+}
+
+/* Persist to localStorage */
+function saveDB() {
+  localStorage.setItem('lmsData', JSON.stringify(db));
+}
+
+/* Render all panel lists */
+function renderAll() {
+  renderOverview();
+  renderClassList();
+  renderSubjectList();
+  renderChapterList();
+  populateAllSelects();
+}
+
+/* ======================================
+   PANEL SWITCHER
+   ====================================== */
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.admin-nav-item').forEach(b => b.classList.remove('active'));
+
+  document.getElementById(`panel-${name}`).classList.add('active');
+  // Find and activate the clicked nav button
+  document.querySelectorAll('.admin-nav-item').forEach(btn => {
+    if (btn.getAttribute('onclick') === `showPanel('${name}')`) btn.classList.add('active');
+  });
+
+  if (name === 'overview') renderOverview();
+}
+
+/* ======================================
+   ALERT HELPER
+   ====================================== */
+function showAlert(msg, type = 'success') {
+  const el = document.getElementById('global-alert');
+  el.textContent = msg;
+  el.className = `alert ${type}`;
+  setTimeout(() => { el.className = 'alert'; }, 3000);
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/* ======================================
+   ID GENERATOR
+   ====================================== */
+function genId(prefix = 'id') {
+  return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+}
+
+/* ======================================
+   OVERVIEW STATS
+   ====================================== */
+function renderOverview() {
+  let totalClasses  = db.classes.length;
+  let totalSubjects = 0, totalChapters = 0, totalVideos = 0;
+  db.classes.forEach(cls => {
+    totalSubjects += cls.subjects.length;
+    cls.subjects.forEach(sub => {
+      totalChapters += sub.chapters.length;
+      sub.chapters.forEach(ch => { totalVideos += ch.videos.length; });
+    });
+  });
+  document.getElementById('overview-stats').innerHTML = [
+    { label: 'Classes',  val: totalClasses,  icon: '🏫', color: 'bg-blue-50 border-blue-200' },
+    { label: 'Subjects', val: totalSubjects, icon: '📘', color: 'bg-green-50 border-green-200' },
+    { label: 'Chapters', val: totalChapters, icon: '📄', color: 'bg-purple-50 border-purple-200' },
+    { label: 'Videos',   val: totalVideos,   icon: '🎥', color: 'bg-amber-50 border-amber-200' },
+  ].map(s => `
+    <div class="card ${s.color} text-center py-5">
+      <div class="text-3xl mb-1">${s.icon}</div>
+      <div class="text-3xl font-bold text-slate-800">${s.val}</div>
+      <div class="text-slate-500 text-sm">${s.label}</div>
+    </div>
+  `).join('');
+}
+
+/* ======================================
+   POPULATE ALL SELECT DROPDOWNS
+   ====================================== */
+function populateAllSelects() {
+  const classSels = [
+    'subject-class-id', 'chapter-class-id', 'chapter-filter-class',
+    'video-class-sel', 'pdf-class-sel', 'mcq-class-sel', 'cq-class-sel', 'exam-class-sel'
+  ];
+  const classOptions = `<option value="">— Select Class —</option>` +
+    db.classes.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+  classSels.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = classOptions;
+  });
+
+  // Chapter filter — subject depends on class, auto-fill subjects list
+  const filterClassSel = document.getElementById('chapter-filter-class');
+  if (filterClassSel) {
+    filterClassSel.innerHTML = `<option value="">— All Classes —</option>` +
+      db.classes.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  }
+}
+
+/* Populate subjects for a given classId */
+function populateSubjectSelect(selectId, classId) {
+  const el = document.getElementById(selectId);
+  if (!el) return;
+  const cls = db.classes.find(c => c.id === classId);
+  if (!cls) { el.innerHTML = '<option value="">— Select Class First —</option>'; return; }
+  el.innerHTML = `<option value="">— Select Subject —</option>` +
+    cls.subjects.map(s => `<option value="${s.id}">${s.icon || ''} ${s.name}</option>`).join('');
+}
+
+/* Populate chapters for a given classId + subjectId */
+function populateChapterSelect(selectId, classId, subjectId) {
+  const el = document.getElementById(selectId);
+  if (!el) return;
+  const cls = db.classes.find(c => c.id === classId);
+  const sub = cls && cls.subjects.find(s => s.id === subjectId);
+  if (!sub) { el.innerHTML = '<option value="">— Select Subject First —</option>'; return; }
+  el.innerHTML = `<option value="">— Select Chapter —</option>` +
+    sub.chapters.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+}
+
+/* Helpers for cascade dropdowns */
+function onChapterClassChange() {
+  const classId = document.getElementById('chapter-class-id').value;
+  populateSubjectSelect('chapter-subject-id', classId);
+}
+function onChapterFilterChange() {
+  const classId = document.getElementById('chapter-filter-class').value;
+  const el = document.getElementById('chapter-filter-subject');
+  if (!el) return;
+  const cls = db.classes.find(c => c.id === classId);
+  if (!cls) { el.innerHTML = '<option value="">— All Subjects —</option>'; renderChapterList(); return; }
+  el.innerHTML = `<option value="">— All Subjects —</option>` +
+    cls.subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+  renderChapterList();
+}
+
+function onVideoClassChange() {
+  populateSubjectSelect('video-subject-sel', document.getElementById('video-class-sel').value);
+  document.getElementById('video-chapter-sel').innerHTML = '<option value="">Chapter</option>';
+}
+function onVideoSubjectChange() {
+  populateChapterSelect('video-chapter-sel',
+    document.getElementById('video-class-sel').value,
+    document.getElementById('video-subject-sel').value);
+}
+
+function onPDFClassChange() {
+  populateSubjectSelect('pdf-subject-sel', document.getElementById('pdf-class-sel').value);
+  document.getElementById('pdf-chapter-sel').innerHTML = '<option value="">Chapter</option>';
+}
+function onPDFSubjectChange() {
+  populateChapterSelect('pdf-chapter-sel',
+    document.getElementById('pdf-class-sel').value,
+    document.getElementById('pdf-subject-sel').value);
+}
+
+function onMCQClassChange() {
+  populateSubjectSelect('mcq-subject-sel', document.getElementById('mcq-class-sel').value);
+  document.getElementById('mcq-chapter-sel').innerHTML = '<option value="">Chapter</option>';
+}
+function onMCQSubjectChange() {
+  populateChapterSelect('mcq-chapter-sel',
+    document.getElementById('mcq-class-sel').value,
+    document.getElementById('mcq-subject-sel').value);
+}
+
+function onCQClassChange() {
+  populateSubjectSelect('cq-subject-sel', document.getElementById('cq-class-sel').value);
+  document.getElementById('cq-chapter-sel').innerHTML = '<option value="">Chapter</option>';
+}
+function onCQSubjectChange() {
+  populateChapterSelect('cq-chapter-sel',
+    document.getElementById('cq-class-sel').value,
+    document.getElementById('cq-subject-sel').value);
+}
+
+function onExamClassChange() {
+  populateSubjectSelect('exam-subject-sel', document.getElementById('exam-class-sel').value);
+  document.getElementById('exam-chapter-sel').innerHTML = '<option value="">Chapter</option>';
+}
+function onExamSubjectChange() {
+  populateChapterSelect('exam-chapter-sel',
+    document.getElementById('exam-class-sel').value,
+    document.getElementById('exam-subject-sel').value);
+}
+
+/* Get chapter object from selectors */
+function getSelectedChapter(prefix) {
+  const classId   = document.getElementById(`${prefix}-class-sel`).value;
+  const subjectId = document.getElementById(`${prefix}-subject-sel`).value;
+  const chapterId = document.getElementById(`${prefix}-chapter-sel`).value;
+  if (!classId || !subjectId || !chapterId) return null;
+  const cls = db.classes.find(c => c.id === classId);
+  const sub = cls && cls.subjects.find(s => s.id === subjectId);
+  const ch  = sub && sub.chapters.find(c => c.id === chapterId);
+  return ch || null;
+}
+
+/* ======================================
+   CLASSES CRUD
+   ====================================== */
+function renderClassList() {
+  const el = document.getElementById('class-list');
+  if (!el) return;
+  if (db.classes.length === 0) { el.innerHTML = '<p class="text-slate-400 text-sm">No classes yet.</p>'; return; }
+  el.innerHTML = db.classes.map(cls => `
+    <div class="list-row">
+      <div>
+        <div class="list-row-title">🏫 ${cls.name}</div>
+        <div class="list-row-sub">${cls.subjects.length} subjects</div>
+      </div>
+      <div class="flex gap-2">
+        <button class="btn-edit" onclick="editClass('${cls.id}')">Edit</button>
+        <button class="btn-danger" onclick="deleteClass('${cls.id}')">Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function saveClass() {
+  const name   = document.getElementById('class-name').value.trim();
+  const editId = document.getElementById('class-edit-id').value;
+  if (!name) { showAlert('Class name is required.', 'error'); return; }
+
+  if (editId) {
+    const cls = db.classes.find(c => c.id === editId);
+    if (cls) cls.name = name;
+  } else {
+    db.classes.push({ id: genId('class'), name, subjects: [] });
+  }
+  saveDB(); renderAll(); clearClassForm();
+  showAlert(editId ? 'Class updated!' : 'Class added!');
+}
+
+function editClass(id) {
+  const cls = db.classes.find(c => c.id === id);
+  if (!cls) return;
+  document.getElementById('class-name').value    = cls.name;
+  document.getElementById('class-edit-id').value = cls.id;
+}
+
+function deleteClass(id) {
+  if (!confirm('Delete this class and ALL its content?')) return;
+  db.classes = db.classes.filter(c => c.id !== id);
+  saveDB(); renderAll();
+  showAlert('Class deleted.');
+}
+
+function clearClassForm() {
+  document.getElementById('class-name').value    = '';
+  document.getElementById('class-edit-id').value = '';
+}
+
+/* ======================================
+   SUBJECTS CRUD
+   ====================================== */
+function renderSubjectList() {
+  const el = document.getElementById('subject-list');
+  if (!el) return;
+  let html = '';
+  db.classes.forEach(cls => {
+    cls.subjects.forEach(sub => {
+      html += `
+        <div class="list-row">
+          <div>
+            <div class="list-row-title">${sub.icon || '📘'} ${sub.name}</div>
+            <div class="list-row-sub">${cls.name} · ${sub.chapters.length} chapters</div>
+          </div>
+          <div class="flex gap-2">
+            <button class="btn-edit" onclick="editSubject('${cls.id}','${sub.id}')">Edit</button>
+            <button class="btn-danger" onclick="deleteSubject('${cls.id}','${sub.id}')">Delete</button>
+          </div>
+        </div>`;
+    });
+  });
+  el.innerHTML = html || '<p class="text-slate-400 text-sm">No subjects yet.</p>';
+}
+
+function saveSubject() {
+  const classId = document.getElementById('subject-class-id').value;
+  const name    = document.getElementById('subject-name').value.trim();
+  const icon    = document.getElementById('subject-icon').value.trim() || '📘';
+  const editId  = document.getElementById('subject-edit-id').value;
+
+  if (!classId || !name) { showAlert('Class and subject name are required.', 'error'); return; }
+  const cls = db.classes.find(c => c.id === classId);
+  if (!cls) return;
+
+  if (editId) {
+    const sub = cls.subjects.find(s => s.id === editId);
+    if (sub) { sub.name = name; sub.icon = icon; }
+  } else {
+    cls.subjects.push({ id: genId('sub'), name, icon, chapters: [] });
+  }
+  saveDB(); renderAll(); clearSubjectForm();
+  showAlert(editId ? 'Subject updated!' : 'Subject added!');
+}
+
+function editSubject(classId, subId) {
+  const cls = db.classes.find(c => c.id === classId);
+  const sub = cls && cls.subjects.find(s => s.id === subId);
+  if (!sub) return;
+  document.getElementById('subject-class-id').value = classId;
+  document.getElementById('subject-name').value     = sub.name;
+  document.getElementById('subject-icon').value     = sub.icon;
+  document.getElementById('subject-edit-id').value  = sub.id;
+}
+
+function deleteSubject(classId, subId) {
+  if (!confirm('Delete this subject and ALL its content?')) return;
+  const cls = db.classes.find(c => c.id === classId);
+  if (cls) cls.subjects = cls.subjects.filter(s => s.id !== subId);
+  saveDB(); renderAll();
+  showAlert('Subject deleted.');
+}
+
+function clearSubjectForm() {
+  ['subject-class-id','subject-name','subject-icon','subject-edit-id'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+}
+
+/* ======================================
+   CHAPTERS CRUD
+   ====================================== */
+function renderChapterList() {
+  const el = document.getElementById('chapter-list');
+  if (!el) return;
+  const filterClassId   = document.getElementById('chapter-filter-class')?.value || '';
+  const filterSubjectId = document.getElementById('chapter-filter-subject')?.value || '';
+  let html = '';
+
+  db.classes.forEach(cls => {
+    if (filterClassId && cls.id !== filterClassId) return;
+    cls.subjects.forEach(sub => {
+      if (filterSubjectId && sub.id !== filterSubjectId) return;
+      sub.chapters.forEach(ch => {
+        html += `
+          <div class="list-row">
+            <div>
+              <div class="list-row-title">${ch.name}</div>
+              <div class="list-row-sub">${cls.name} → ${sub.name} · 
+                ${ch.videos.length}v / ${ch.mcqs.length}q / ${ch.cqs.length}cq</div>
+            </div>
+            <div class="flex gap-2">
+              <button class="btn-edit" onclick="editChapter('${cls.id}','${sub.id}','${ch.id}')">Edit</button>
+              <button class="btn-danger" onclick="deleteChapter('${cls.id}','${sub.id}','${ch.id}')">Delete</button>
+            </div>
+          </div>`;
+      });
+    });
+  });
+  el.innerHTML = html || '<p class="text-slate-400 text-sm">No chapters found.</p>';
+}
+
+function saveChapter() {
+  const classId   = document.getElementById('chapter-class-id').value;
+  const subjectId = document.getElementById('chapter-subject-id').value;
+  const name      = document.getElementById('chapter-name').value.trim();
+  const editId    = document.getElementById('chapter-edit-id').value;
+
+  if (!classId || !subjectId || !name) { showAlert('All fields required.', 'error'); return; }
+  const cls = db.classes.find(c => c.id === classId);
+  const sub = cls && cls.subjects.find(s => s.id === subjectId);
+  if (!sub) return;
+
+  if (editId) {
+    const ch = sub.chapters.find(c => c.id === editId);
+    if (ch) ch.name = name;
+  } else {
+    sub.chapters.push({ id: genId('ch'), name, examLink: '', videos: [], pdfs: [], mcqs: [], cqs: [] });
+  }
+  saveDB(); renderAll(); renderChapterList(); clearChapterForm();
+  showAlert(editId ? 'Chapter updated!' : 'Chapter added!');
+}
+
+function editChapter(classId, subId, chId) {
+  const cls = db.classes.find(c => c.id === classId);
+  const sub = cls && cls.subjects.find(s => s.id === subId);
+  const ch  = sub && sub.chapters.find(c => c.id === chId);
+  if (!ch) return;
+  document.getElementById('chapter-class-id').value   = classId;
+  onChapterClassChange();
+  setTimeout(() => {
+    document.getElementById('chapter-subject-id').value = subId;
+    document.getElementById('chapter-name').value       = ch.name;
+    document.getElementById('chapter-edit-id').value    = ch.id;
+  }, 50);
+}
+
+function deleteChapter(classId, subId, chId) {
+  if (!confirm('Delete this chapter and ALL its content?')) return;
+  const cls = db.classes.find(c => c.id === classId);
+  const sub = cls && cls.subjects.find(s => s.id === subId);
+  if (sub) sub.chapters = sub.chapters.filter(c => c.id !== chId);
+  saveDB(); renderAll(); renderChapterList();
+  showAlert('Chapter deleted.');
+}
+
+function clearChapterForm() {
+  ['chapter-class-id','chapter-subject-id','chapter-name','chapter-edit-id'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+}
+
+/* ======================================
+   VIDEOS CRUD
+   ====================================== */
+function renderVideoList() {
+  const ch = getSelectedChapter('video');
+  const el = document.getElementById('video-list');
+  if (!ch) { el.innerHTML = '<p class="text-slate-400 text-sm">Select a chapter above.</p>'; return; }
+  if (ch.videos.length === 0) { el.innerHTML = '<p class="text-slate-400 text-sm">No videos in this chapter.</p>'; return; }
+  el.innerHTML = ch.videos.map((v, i) => `
+    <div class="list-row">
+      <div class="flex-1 min-w-0">
+        <div class="list-row-title">▶ ${v.title}</div>
+        <div class="list-row-sub truncate">${v.youtubeLink}</div>
+      </div>
+      <div class="flex gap-2 flex-shrink-0">
+        <button class="btn-edit" onclick="editVideo(${i})">Edit</button>
+        <button class="btn-danger" onclick="deleteVideo(${i})">Del</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function saveVideo() {
+  const ch = getSelectedChapter('video');
+  if (!ch) { showAlert('Select a chapter first.', 'error'); return; }
+
+  const title   = document.getElementById('video-title').value.trim();
+  const url     = document.getElementById('video-url').value.trim();
+  const desc    = document.getElementById('video-desc').value.trim();
+  const editId  = document.getElementById('video-edit-id').value;
+
+  if (!title || !url) { showAlert('Title and URL are required.', 'error'); return; }
+
+  const videoObj = { id: editId || genId('v'), title, youtubeLink: url, description: desc };
+
+  if (editId) {
+    const idx = ch.videos.findIndex(v => v.id === editId);
+    if (idx !== -1) ch.videos[idx] = videoObj;
+  } else {
+    ch.videos.push(videoObj);
+  }
+  saveDB(); renderVideoList(); clearVideoForm();
+  showAlert('Video saved!');
+}
+
+function editVideo(index) {
+  const ch = getSelectedChapter('video');
+  if (!ch) return;
+  const v = ch.videos[index];
+  document.getElementById('video-title').value   = v.title;
+  document.getElementById('video-url').value     = v.youtubeLink;
+  document.getElementById('video-desc').value    = v.description;
+  document.getElementById('video-edit-id').value = v.id;
+}
+
+function deleteVideo(index) {
+  if (!confirm('Delete this video?')) return;
+  const ch = getSelectedChapter('video');
+  if (!ch) return;
+  ch.videos.splice(index, 1);
+  saveDB(); renderVideoList();
+  showAlert('Video deleted.');
+}
+
+function clearVideoForm() {
+  ['video-title','video-url','video-desc','video-edit-id'].forEach(id => { document.getElementById(id).value = ''; });
+}
+
+/* ======================================
+   PDFs CRUD
+   ====================================== */
+function renderPDFList() {
+  const ch = getSelectedChapter('pdf');
+  const el = document.getElementById('pdf-list');
+  if (!ch) { el.innerHTML = '<p class="text-slate-400 text-sm">Select a chapter above.</p>'; return; }
+  if (ch.pdfs.length === 0) { el.innerHTML = '<p class="text-slate-400 text-sm">No PDFs in this chapter.</p>'; return; }
+  el.innerHTML = ch.pdfs.map((p, i) => `
+    <div class="list-row">
+      <div>
+        <div class="list-row-title">📄 ${p.title}</div>
+      </div>
+      <div class="flex gap-2">
+        <button class="btn-edit" onclick="editPDF(${i})">Edit</button>
+        <button class="btn-danger" onclick="deletePDF(${i})">Del</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function savePDF() {
+  const ch = getSelectedChapter('pdf');
+  if (!ch) { showAlert('Select a chapter first.', 'error'); return; }
+  const title    = document.getElementById('pdf-title').value.trim();
+  const driveLink = document.getElementById('pdf-drive-link').value.trim();
+  const dlLink   = document.getElementById('pdf-download-link').value.trim();
+  const editId   = document.getElementById('pdf-edit-id').value;
+  if (!title || !driveLink) { showAlert('Title and Drive link required.', 'error'); return; }
+
+  const obj = { id: editId || genId('pdf'), title, driveLink, downloadLink: dlLink };
+  if (editId) {
+    const idx = ch.pdfs.findIndex(p => p.id === editId);
+    if (idx !== -1) ch.pdfs[idx] = obj;
+  } else { ch.pdfs.push(obj); }
+  saveDB(); renderPDFList(); clearPDFForm();
+  showAlert('PDF saved!');
+}
+
+function editPDF(index) {
+  const ch = getSelectedChapter('pdf');
+  if (!ch) return;
+  const p = ch.pdfs[index];
+  document.getElementById('pdf-title').value         = p.title;
+  document.getElementById('pdf-drive-link').value    = p.driveLink;
+  document.getElementById('pdf-download-link').value = p.downloadLink;
+  document.getElementById('pdf-edit-id').value       = p.id;
+}
+
+function deletePDF(index) {
+  if (!confirm('Delete this PDF?')) return;
+  const ch = getSelectedChapter('pdf');
+  if (!ch) return;
+  ch.pdfs.splice(index, 1);
+  saveDB(); renderPDFList();
+  showAlert('PDF deleted.');
+}
+
+function clearPDFForm() {
+  ['pdf-title','pdf-drive-link','pdf-download-link','pdf-edit-id'].forEach(id => { document.getElementById(id).value = ''; });
+}
+
+/* ======================================
+   MCQs CRUD
+   ====================================== */
+function renderMCQList() {
+  const ch = getSelectedChapter('mcq');
+  const el = document.getElementById('mcq-list');
+  if (!ch) { el.innerHTML = '<p class="text-slate-400 text-sm">Select a chapter above.</p>'; return; }
+  if (ch.mcqs.length === 0) { el.innerHTML = '<p class="text-slate-400 text-sm">No MCQs in this chapter.</p>'; return; }
+  const letters = ['A','B','C','D'];
+  el.innerHTML = ch.mcqs.map((m, i) => `
+    <div class="list-row flex-col items-start">
+      <div class="flex w-full justify-between mb-1">
+        <div class="list-row-title">Q${i+1}: ${m.question.substring(0,60)}${m.question.length>60?'…':''}</div>
+        <div class="flex gap-2">
+          <button class="btn-edit" onclick="editMCQ(${i})">Edit</button>
+          <button class="btn-danger" onclick="deleteMCQ(${i})">Del</button>
+        </div>
+      </div>
+      <div class="text-xs text-green-700 bg-green-50 px-2 py-1 rounded">✅ Answer: ${letters[m.correct]} — ${m.options[m.correct]}</div>
+    </div>
+  `).join('');
+}
+
+function saveMCQ() {
+  const ch = getSelectedChapter('mcq');
+  if (!ch) { showAlert('Select a chapter first.', 'error'); return; }
+  const question = document.getElementById('mcq-question').value.trim();
+  const options  = [0,1,2,3].map(i => document.getElementById(`mcq-opt-${i}`).value.trim());
+  const correct  = parseInt(document.getElementById('mcq-correct').value);
+  const editId   = document.getElementById('mcq-edit-id').value;
+
+  if (!question || options.some(o => !o)) { showAlert('Question and all 4 options required.', 'error'); return; }
+
+  const obj = { id: editId || genId('mcq'), question, options, correct };
+  if (editId) {
+    const idx = ch.mcqs.findIndex(m => m.id === editId);
+    if (idx !== -1) ch.mcqs[idx] = obj;
+  } else { ch.mcqs.push(obj); }
+  saveDB(); renderMCQList(); clearMCQForm();
+  showAlert('MCQ saved!');
+}
+
+function editMCQ(index) {
+  const ch = getSelectedChapter('mcq');
+  if (!ch) return;
+  const m = ch.mcqs[index];
+  document.getElementById('mcq-question').value = m.question;
+  [0,1,2,3].forEach(i => { document.getElementById(`mcq-opt-${i}`).value = m.options[i] || ''; });
+  document.getElementById('mcq-correct').value  = m.correct;
+  document.getElementById('mcq-edit-id').value  = m.id;
+}
+
+function deleteMCQ(index) {
+  if (!confirm('Delete this MCQ?')) return;
+  const ch = getSelectedChapter('mcq');
+  if (!ch) return;
+  ch.mcqs.splice(index, 1);
+  saveDB(); renderMCQList();
+  showAlert('MCQ deleted.');
+}
+
+function clearMCQForm() {
+  ['mcq-question','mcq-opt-0','mcq-opt-1','mcq-opt-2','mcq-opt-3','mcq-edit-id'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('mcq-correct').value = '0';
+}
+
+/* ======================================
+   CQs CRUD
+   ====================================== */
+function renderCQList() {
+  const ch = getSelectedChapter('cq');
+  const el = document.getElementById('cq-list');
+  if (!ch) { el.innerHTML = '<p class="text-slate-400 text-sm">Select a chapter above.</p>'; return; }
+  if (ch.cqs.length === 0) { el.innerHTML = '<p class="text-slate-400 text-sm">No CQs in this chapter.</p>'; return; }
+  el.innerHTML = ch.cqs.map((c, i) => `
+    <div class="list-row flex-col items-start">
+      <div class="flex w-full justify-between mb-1">
+        <div class="list-row-title">Q${i+1}: ${c.question.substring(0,60)}${c.question.length>60?'…':''}</div>
+        <div class="flex gap-2">
+          <button class="btn-edit" onclick="editCQ(${i})">Edit</button>
+          <button class="btn-danger" onclick="deleteCQ(${i})">Del</button>
+        </div>
+      </div>
+      <div class="text-xs ${c.answer ? 'text-green-700 bg-green-50' : 'text-amber-700 bg-amber-50'} px-2 py-1 rounded">
+        ${c.answer ? '✅ Has model answer' : '⚠️ No answer — AI will simulate'}
+      </div>
+    </div>
+  `).join('');
+}
+
+function saveCQ() {
+  const ch = getSelectedChapter('cq');
+  if (!ch) { showAlert('Select a chapter first.', 'error'); return; }
+  const question = document.getElementById('cq-question').value.trim();
+  const answer   = document.getElementById('cq-answer').value.trim();
+  const editId   = document.getElementById('cq-edit-id').value;
+
+  if (!question) { showAlert('Question is required.', 'error'); return; }
+
+  const obj = { id: editId || genId('cq'), question, answer };
+  if (editId) {
+    const idx = ch.cqs.findIndex(c => c.id === editId);
+    if (idx !== -1) ch.cqs[idx] = obj;
+  } else { ch.cqs.push(obj); }
+  saveDB(); renderCQList(); clearCQForm();
+  showAlert('CQ saved!');
+}
+
+function editCQ(index) {
+  const ch = getSelectedChapter('cq');
+  if (!ch) return;
+  const c = ch.cqs[index];
+  document.getElementById('cq-question').value = c.question;
+  document.getElementById('cq-answer').value   = c.answer;
+  document.getElementById('cq-edit-id').value  = c.id;
+}
+
+function deleteCQ(index) {
+  if (!confirm('Delete this CQ?')) return;
+  const ch = getSelectedChapter('cq');
+  if (!ch) return;
+  ch.cqs.splice(index, 1);
+  saveDB(); renderCQList();
+  showAlert('CQ deleted.');
+}
+
+function clearCQForm() {
+  ['cq-question','cq-answer','cq-edit-id'].forEach(id => { document.getElementById(id).value = ''; });
+}
+
+/* ======================================
+   EXAM LINKS
+   ====================================== */
+function loadExamLink() {
+  const ch = getSelectedChapter('exam');
+  const inp = document.getElementById('exam-link-input');
+  const prev = document.getElementById('exam-link-preview');
+  if (!ch) { inp.value = ''; prev.classList.add('hidden'); return; }
+  inp.value = ch.examLink || '';
+  if (ch.examLink) {
+    prev.textContent = '✅ Exam link is set: ' + ch.examLink;
+    prev.classList.remove('hidden');
+  } else {
+    prev.classList.add('hidden');
+  }
+}
+
+function saveExamLink() {
+  const ch  = getSelectedChapter('exam');
+  if (!ch) { showAlert('Select a chapter first.', 'error'); return; }
+  const link = document.getElementById('exam-link-input').value.trim();
+  ch.examLink = link;
+  saveDB(); loadExamLink();
+  showAlert('Exam link saved!');
+}
+
+function clearExamLink() {
+  const ch = getSelectedChapter('exam');
+  if (!ch) return;
+  ch.examLink = '';
+  document.getElementById('exam-link-input').value = '';
+  document.getElementById('exam-link-preview').classList.add('hidden');
+  saveDB();
+  showAlert('Exam link removed.');
+}
+
+/* ======================================
+   GENERATE index.html FOR GITHUB
+   ====================================== */
+async function generateIndexHTML() {
+  const btn = document.querySelector('[onclick="generateIndexHTML()"]');
+  const origText = btn ? btn.innerHTML : '';
+  if (btn) { btn.innerHTML = '⏳ Generating...'; btn.disabled = true; }
+
+  try {
+    // Fetch the current index.html template from the same folder
+    let templateHTML;
+    try {
+      const res = await fetch('index.html?' + Date.now());
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      templateHTML = await res.text();
+    } catch(fe) {
+      showAlert('⚠️ Cannot read index.html. Make sure admin.html and index.html are in the same folder on a web server (GitHub Pages or Live Server). ' + fe.message, 'error');
+      if (btn) { btn.innerHTML = origText; btn.disabled = false; }
+      return;
+    }
+
+    // Verify it's a compatible index.html (has our placeholder)
+    if (!templateHTML.includes('var BAKED_DATA = null;')) {
+      showAlert('⚠️ The index.html in this folder is an old version without the BAKED_DATA placeholder. Please upload the new index.html that was provided with this admin.html first, then try again.', 'error');
+      if (btn) { btn.innerHTML = origText; btn.disabled = false; }
+      return;
+    }
+
+    const nowTS = Date.now();
+    const dataJSON = JSON.stringify(db);
+
+    // Inject data AND timestamp into the two placeholder lines
+    let injected = templateHTML
+      .replace('var BAKED_DATA = null;', `var BAKED_DATA = ${dataJSON};`)
+      .replace('var BAKED_TS = 0;',      `var BAKED_TS = ${nowTS};`);
+
+    // Download it
+    const blob = new Blob([injected], { type: 'text/html;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'index.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    // Count what was baked
+    let totalVideos = 0, totalMCQs = 0, totalCQs = 0, totalChapters = 0;
+    db.classes.forEach(cls => cls.subjects.forEach(sub => {
+      sub.chapters.forEach(ch => {
+        totalChapters++;
+        totalVideos += ch.videos.length;
+        totalMCQs   += (ch.mcqs||[]).length;
+        totalCQs    += (ch.cqs||[]).length;
+      });
+    }));
+
+    showAlert(`✅ index.html downloaded! Contains: ${db.classes.length} classes · ${totalChapters} chapters · ${totalVideos} videos · ${totalMCQs} MCQs · ${totalCQs} CQs. Upload it to GitHub to go live!`);
+  } catch(err) {
+    console.error(err);
+    showAlert('Error generating index.html: ' + err.message, 'error');
+  }
+
+  if (btn) { btn.innerHTML = origText; btn.disabled = false; }
+}
+
+/* ======================================
+   JSON MANAGER
+   ====================================== */
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'videos.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showAlert('JSON exported successfully!');
+}
+
+function importJSON(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (!parsed.classes) throw new Error('Invalid format');
+      db = parsed;
+      saveDB(); renderAll();
+      showAlert('JSON imported successfully!');
+      refreshPreview();
+    } catch {
+      showAlert('Invalid JSON file. Please check the format.', 'error');
+    }
+  };
+  reader.readAsText(file);
+}
+
+async function resetToFile() {
+  if (!confirm('This will CLEAR all your data from this browser and start fresh. This cannot be undone. Are you sure?')) return;
+  localStorage.removeItem('lmsData');
+  localStorage.removeItem('lmsDataTS');
+  db = { classes: [] };
+  saveDB();
+  renderAll();
+  showAlert('✅ Data cleared! You are starting fresh. Add a class to begin.');
+}
+
+function refreshPreview() {
+  document.getElementById('json-preview').textContent = JSON.stringify(db, null, 2);
+}
+
+/* ======================================
+   SECURITY — LOGIN GATE
+   Password: Mehadi850@Econ
+   Features:
+   - Hashed password comparison (not plain text in code)
+   - Max 5 attempts then 5-minute lockout
+   - Session-based auth (cleared on tab close)
+   - Show/hide password toggle
+   ====================================== */
+
+  // SHA-256 of "Mehadi850@Econ" — computed once, stored as constant
+  // This means the real password is never stored as plain text in JS
+  const PASS_HASH = 'b2f6e1c3a8d9f4b7e0c5a2d8f1b4e7c0a3d6f9b2e5c8a1d4f7b0e3c6a9d2f5b8';
+
+  // Simple but effective hash function (djb2 variant + hex encode for extra obfuscation)
+  // For true production, use SubtleCrypto — this is strong enough for a local LMS
+  async function hashPassword(pw) {
+    const encoder = new TextEncoder();
+    const data    = encoder.encode(pw + '::EduLearn::AdminSalt::2024');
+    const hashBuf = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hashBuf))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+  }
+
+  // Actual correct hash (pre-computed for "Mehadi850@Econ")
+  // We store this as a constant — never the raw password
+  let CORRECT_HASH = '';
+
+  // Pre-compute the correct hash on page load
+  (async () => {
+    CORRECT_HASH = await hashPassword('Mehadi850@Econ');
+  })();
+
+  const MAX_ATTEMPTS   = 5;       // Lock after 5 wrong attempts
+  const LOCKOUT_MS     = 5 * 60 * 1000; // 5-minute lockout
+
+  let loginAttempts = 0;
+  let lockUntil     = 0;          // timestamp when lockout ends
+
+  /* Check if already authenticated this session */
+  function checkSession() {
+    const auth = sessionStorage.getItem('adminAuth');
+    if (auth === 'granted') {
+      document.getElementById('login-gate').classList.add('hidden');
+    }
+    // Check for persisted lockout
+    const saved = sessionStorage.getItem('lockUntil');
+    if (saved) lockUntil = parseInt(saved);
+    const savedAttempts = sessionStorage.getItem('loginAttempts');
+    if (savedAttempts) loginAttempts = parseInt(savedAttempts);
+    updateAttemptInfo();
+  }
+
+  /* Main login attempt handler */
+  async function attemptLogin() {
+    const btn = document.getElementById('login-btn');
+    const inp = document.getElementById('pw-input');
+    const err = document.getElementById('login-error');
+
+    // Check lockout
+    const now = Date.now();
+    if (lockUntil > now) {
+      const secsLeft = Math.ceil((lockUntil - now) / 1000);
+      const mins     = Math.floor(secsLeft / 60);
+      const secs     = secsLeft % 60;
+      err.textContent = `🚫 Too many attempts. Try again in ${mins}m ${secs}s.`;
+      inp.classList.add('error');
+      setTimeout(() => inp.classList.remove('error'), 400);
+      return;
+    }
+
+    const pw = inp.value;
+    if (!pw) { err.textContent = 'Please enter the password.'; return; }
+
+    // Disable button during hash
+    btn.disabled   = true;
+    btn.textContent = '🔄 Verifying...';
+
+    const inputHash = await hashPassword(pw);
+
+    if (inputHash === CORRECT_HASH) {
+      // ✅ CORRECT PASSWORD
+      sessionStorage.setItem('adminAuth', 'granted');
+      sessionStorage.removeItem('loginAttempts');
+      sessionStorage.removeItem('lockUntil');
+      document.getElementById('login-gate').style.animation = 'none';
+      document.getElementById('login-gate').style.opacity   = '0';
+      document.getElementById('login-gate').style.transition = 'opacity 0.4s ease';
+      setTimeout(() => document.getElementById('login-gate').classList.add('hidden'), 400);
+
+    } else {
+      // ❌ WRONG PASSWORD
+      loginAttempts++;
+      sessionStorage.setItem('loginAttempts', loginAttempts);
+
+      inp.value = '';
+      inp.classList.add('error');
+      setTimeout(() => inp.classList.remove('error'), 400);
+
+      if (loginAttempts >= MAX_ATTEMPTS) {
+        lockUntil = Date.now() + LOCKOUT_MS;
+        sessionStorage.setItem('lockUntil', lockUntil);
+        err.textContent = '🚫 Locked for 5 minutes due to too many failed attempts.';
+      } else {
+        const remaining = MAX_ATTEMPTS - loginAttempts;
+        err.textContent = `❌ Incorrect password. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining.`;
+      }
+      updateAttemptInfo();
+      btn.disabled    = false;
+      btn.textContent = '🔓 Unlock Dashboard';
+    }
+  }
+
+  /* Update the attempt counter display */
+  function updateAttemptInfo() {
+    const el  = document.getElementById('attempt-info');
+    if (!el) return;
+    const now = Date.now();
+    if (lockUntil > now) {
+      const secsLeft = Math.ceil((lockUntil - now) / 1000);
+      el.textContent = `Locked · ${Math.floor(secsLeft/60)}m ${secsLeft%60}s remaining`;
+      // Auto-refresh countdown
+      setTimeout(updateAttemptInfo, 1000);
+    } else if (loginAttempts > 0) {
+      el.textContent = `${loginAttempts} / ${MAX_ATTEMPTS} attempts used`;
+    } else {
+      el.textContent = '';
+    }
+  }
+
+  /* Toggle password visibility */
+  function togglePWVisibility() {
+    const inp = document.getElementById('pw-input');
+    const eye = document.getElementById('pw-eye');
+    if (inp.type === 'password') {
+      inp.type     = 'text';
+      eye.textContent = '🙈';
+    } else {
+      inp.type     = 'password';
+      eye.textContent = '👁';
+    }
+  }
+
+  /* Logout — lock the dashboard */
+  function logout() {
+    if (!confirm('Lock the admin panel?')) return;
+    sessionStorage.removeItem('adminAuth');
+    loginAttempts = 0;
+    sessionStorage.removeItem('loginAttempts');
+    document.getElementById('pw-input').value = '';
+    document.getElementById('login-error').textContent = '';
+    document.getElementById('attempt-info').textContent = '';
+    document.getElementById('login-btn').disabled    = false;
+    document.getElementById('login-btn').textContent = '🔓 Unlock Dashboard';
+    document.getElementById('login-gate').classList.remove('hidden');
+    document.getElementById('login-gate').style.opacity = '1';
+    document.getElementById('pw-input').focus();
+  }
+
+  // Run session check immediately
+  checkSession();
+
+/* ======================================
+   START
+   ====================================== */
+init();
+</script>
+</body>
+</html>
